@@ -155,11 +155,12 @@
   .config-narrative .nar-body { font-size: 14px; color: var(--ink-2); }
   .config-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0,1fr));
-    gap: 20px;
+    grid-template-columns: repeat(5, minmax(0,1fr));
+    gap: 18px;
   }
-  @media (max-width: 1100px) { .config-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px)  { .config-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 1280px) { .config-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 800px)  { .config-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 500px)  { .config-grid { grid-template-columns: 1fr; } }
   .config-group { display: flex; flex-direction: column; gap: 14px; }
   .config-group h3 {
     margin: 0 0 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -409,7 +410,7 @@
           <input type="range" id="cfg-batP" min="0" max="200" step="5" value="0">
         </div>
         <div class="field">
-          <label>Annual PPA (off-site, "annual-matched" RECs)
+          <label>Annual PPA volume
             <span class="val"><span id="v-ppa">0</span> GWh/yr</span></label>
           <input type="range" id="cfg-ppa" min="0" max="2000" step="10" value="0">
         </div>
@@ -426,10 +427,45 @@
       </div>
 
       <div class="config-group">
-        <h3>Emissions &amp; pricing</h3>
+        <h3>Procurement prices</h3>
+        <div class="field">
+          <label>Solar PPA <span class="val">£<span id="v-pSolar">72</span>/MWh</span></label>
+          <input type="range" id="cfg-pSolar" min="20" max="150" step="1" value="72">
+        </div>
+        <div class="field">
+          <label>Wind PPA <span class="val">£<span id="v-pWind">75</span>/MWh</span></label>
+          <input type="range" id="cfg-pWind" min="20" max="150" step="1" value="75">
+        </div>
+        <div class="field">
+          <label>Off-site PPA <span class="val">£<span id="v-pPPA">95</span>/MWh</span></label>
+          <input type="range" id="cfg-pPPA" min="20" max="200" step="1" value="95">
+        </div>
+        <div class="field">
+          <label>Grid wholesale <span class="val">£<span id="v-pGrid">85</span>/MWh</span></label>
+          <input type="range" id="cfg-pGrid" min="30" max="250" step="1" value="85">
+        </div>
+        <div class="field">
+          <label>Gas variable cost <span class="val">£<span id="v-pGas">70</span>/MWh</span></label>
+          <input type="range" id="cfg-pGas" min="20" max="200" step="1" value="70">
+        </div>
+        <div class="field">
+          <label>Battery annualised <span class="val">£<span id="v-pBat">35</span>/kWh-yr</span></label>
+          <input type="range" id="cfg-pBat" min="15" max="100" step="1" value="35">
+        </div>
+      </div>
+
+      <div class="config-group">
+        <h3>Emissions, region &amp; target</h3>
+        <div class="field">
+          <label>Grid region preset
+            <select id="cfg-region">
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+        </div>
         <div class="field">
           <label>Grid CO₂ factor <span class="val"><span id="v-gridco2">400</span> kg/MWh</span></label>
-          <input type="range" id="cfg-gridco2" min="20" max="900" step="10" value="400">
+          <input type="range" id="cfg-gridco2" min="10" max="900" step="5" value="400">
         </div>
         <div class="field">
           <label>Gas CO₂ factor <span class="val"><span id="v-gasco2">380</span> kg/MWh</span></label>
@@ -438,6 +474,10 @@
         <div class="field">
           <label>Carbon price <span class="val">£<span id="v-carbon">80</span>/tCO₂</span></label>
           <input type="range" id="cfg-carbon" min="0" max="300" step="5" value="80">
+        </div>
+        <div class="field">
+          <label>Hourly matching target <span class="val"><span id="v-target">80</span>%</span></label>
+          <input type="range" id="cfg-target" min="0" max="100" step="5" value="80">
         </div>
         <div class="field">
           <label>Grid intensity profile
@@ -472,17 +512,17 @@
     <div class="kpi hourly">
       <span class="kpi-label">Hourly (24/7) matching <span class="kpi-badge" id="kpi-hourly-badge">—</span></span>
       <span class="kpi-value"><span id="kpi-hourly">—</span>%</span>
-      <span class="kpi-sub" id="kpi-hourly-sub">Load-weighted share of hours fully covered by clean energy</span>
-    </div>
-    <div class="kpi emit">
-      <span class="kpi-label">Residual emissions</span>
-      <span class="kpi-value tnum"><span id="kpi-emit">—</span> <span style="font-size: 16px; color: var(--ink-2)">tCO₂e</span></span>
-      <span class="kpi-sub" id="kpi-emit-sub">From grid &amp; gas, after on-site clean offset</span>
+      <span class="kpi-sub" id="kpi-hourly-sub">Load-weighted share of hours covered by clean supply</span>
     </div>
     <div class="kpi cost">
-      <span class="kpi-label">Carbon-priced exposure</span>
-      <span class="kpi-value tnum">£<span id="kpi-cost">—</span></span>
-      <span class="kpi-sub" id="kpi-cost-sub">Annual cost at configured carbon price</span>
+      <span class="kpi-label">Annual energy bill</span>
+      <span class="kpi-value tnum">£<span id="kpi-bill">—</span><span style="font-size: 18px; color: var(--ink-2); margin-left:2px" id="kpi-bill-unit">m</span></span>
+      <span class="kpi-sub" id="kpi-bill-sub">Procurement, grid, gas, battery amortised</span>
+    </div>
+    <div class="kpi emit">
+      <span class="kpi-label">Carbon footprint</span>
+      <span class="kpi-value tnum"><span id="kpi-emit">—</span> <span style="font-size: 16px; color: var(--ink-2)">tCO₂e</span></span>
+      <span class="kpi-sub" id="kpi-emit-sub">At configured carbon price, £<span id="kpi-cost">—</span></span>
     </div>
   </div>
 
@@ -584,6 +624,8 @@
     <b>Disclaimer.</b> This is a personal exploratory project. All generation profiles, capacity factors, and pre-built scenarios are illustrative and produced from simplified deterministic models, not real measured data. Numbers from this app are for learning and demonstration only. Do not use them in regulatory filings, CDP submissions, SBTi disclosures, or any setting where accuracy matters. Not affiliated with the GHG Protocol, SBTi, EnergyTag, or any regulator.
     <br><br>
     <b>Methodology.</b> Profiles modelled deterministically from site type, latitude-equivalent solar irradiance, onshore-wind synoptic patterns, and dispatch priority (renewables → battery → gas → grid). Hourly matching scored as Σmin(clean<sub>h</sub>, load<sub>h</sub>) ÷ Σload<sub>h</sub>, in line with the EnergyTag granular-certificate methodology and the GHG Protocol Scope 2 hourly-matching proposal (October 2025 consultation draft).
+    <br><br>
+    <b>Reference data.</b> Grid carbon intensity presets are 2024 annual averages from Carbon Brief (UK), RTE (France), Fraunhofer ISE (Germany), EIA and EPA (US national and state), Ember (EU and global), AEMO via Open Electricity (Australia), and the IEA Emissions Factors 2025 database. Procurement price defaults reflect the LevelTen UK PPA Price Index Q3 2025 (solar ~£72/MWh, wind ~£75/MWh), UK day-ahead wholesale ~£85/MWh, and battery storage at £250/kWh capex amortised over 12 years at 7% WACC (~£35/kWh-yr).
   </div>
 </main>
 
@@ -598,6 +640,38 @@
 const HOURS = 8760;
 const HOURS_PER_MONTH = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]; // non-leap
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ---------- Grid regions ----------
+   2024 annual-average grid carbon intensity, in kgCO2 / MWh (= gCO2 / kWh).
+   Sources: Carbon Brief (UK), RTE (France), Fraunhofer ISE (Germany),
+   EIA / EPA (US averages and state-level), Ember (EU and global),
+   AEMO via Open Electricity (Australia NEM), IEA Emissions Factors 2025.
+*/
+const REGIONS = [
+  { id: 'custom',      label: 'Custom',                       co2: 400 },
+  { id: 'uk',          label: 'United Kingdom',               co2: 124 },
+  { id: 'france',      label: 'France',                       co2: 22  },
+  { id: 'germany',     label: 'Germany',                      co2: 309 },
+  { id: 'spain',       label: 'Spain',                        co2: 150 },
+  { id: 'netherlands', label: 'Netherlands',                  co2: 330 },
+  { id: 'ireland',     label: 'Ireland',                      co2: 290 },
+  { id: 'poland',      label: 'Poland',                       co2: 650 },
+  { id: 'norway',      label: 'Norway',                       co2: 30  },
+  { id: 'sweden',      label: 'Sweden',                       co2: 40  },
+  { id: 'eu27',        label: 'EU27 average',                 co2: 211 },
+  { id: 'texas',       label: 'Texas (ERCOT)',                co2: 343 },
+  { id: 'california',  label: 'California (CAISO)',           co2: 224 },
+  { id: 'pjm',         label: 'PJM (US East)',                co2: 360 },
+  { id: 'miso',        label: 'MISO (US Midwest)',            co2: 460 },
+  { id: 'us',          label: 'United States average',        co2: 384 },
+  { id: 'australia',   label: 'Australia (NEM)',              co2: 445 },
+  { id: 'japan',       label: 'Japan',                        co2: 460 },
+  { id: 'korea',       label: 'South Korea',                  co2: 440 },
+  { id: 'china',       label: 'China',                        co2: 540 },
+  { id: 'india',       label: 'India',                        co2: 690 },
+  { id: 'brazil',      label: 'Brazil',                       co2: 100 },
+  { id: 'canada',      label: 'Canada',                       co2: 125 }
+];
 
 /* ---------- Deterministic pseudo-random ---------- */
 function hash(x) {
@@ -831,12 +905,16 @@ function simulate(cfg) {
   // Metrics
   let loadTotal = 0, cleanTotal = 0, cleanMatchedHourly = 0;
   let gridTotal = 0, gasTotal = 0;
+  let solarTotal = 0, windTotal = 0, ppaTotal = 0;
   let cleanSpillTotal = 0;
   let emissions = 0;
   for (let h = 0; h < HOURS; h++) {
     loadTotal += load[h];
     gridTotal += grid[h];
     gasTotal += gas[h];
+    solarTotal += solar[h];
+    windTotal += wind[h];
+    ppaTotal += ppa[h];
     // For annual matching: count ALL procured clean (incl. spill)
     cleanTotal += solar[h] + wind[h] + ppa[h];
     cleanMatchedHourly += cleanToLoad[h];
@@ -845,6 +923,20 @@ function simulate(cfg) {
   }
   emissions = emissions / 1000; // kg -> tonnes
   const carbonCost = emissions * cfg.carbonPrice;
+
+  // ---------- Procurement cost ----------
+  // Treat all PPA-style contracts as £/MWh paid against generation (incl. spill).
+  // Behind-the-meter solar/wind capacity contracted at the same £/MWh of generation.
+  // Battery cost is annualised £/kWh of installed capacity (capex + financing, ignoring throughput).
+  const costSolar   = solarTotal * cfg.priceSolar;
+  const costWind    = windTotal  * cfg.priceWind;
+  const costPPA     = ppaTotal   * cfg.pricePPA;
+  const costGrid    = gridTotal  * cfg.priceGrid;
+  const costGas     = gasTotal   * cfg.priceGas;
+  const costBattery = cfg.batteryE * 1000 * cfg.priceBattery; // MWh -> kWh, then £/kWh-yr
+  const energyBill  = costSolar + costWind + costPPA + costGrid + costGas + costBattery;
+  const totalAnnualCost = energyBill + carbonCost;
+  const effectivePricePerMWh = loadTotal > 0 ? energyBill / loadTotal : 0;
 
   // Monthly metrics
   const monthly = [];
@@ -935,10 +1027,13 @@ function simulate(cfg) {
     metrics: {
       loadTotal, cleanTotal, cleanMatchedHourly,
       gridTotal, gasTotal, cleanSpillTotal,
+      solarTotal, windTotal, ppaTotal,
       annualMatch: loadTotal > 0 ? Math.min(1, cleanTotal / loadTotal) : 0,
       annualMatchRaw: loadTotal > 0 ? cleanTotal / loadTotal : 0,
       hourlyMatch: loadTotal > 0 ? cleanMatchedHourly / loadTotal : 0,
-      emissions, carbonCost
+      emissions, carbonCost,
+      costSolar, costWind, costPPA, costGrid, costGas, costBattery,
+      energyBill, totalAnnualCost, effectivePricePerMWh
     },
     monthly, heat, gridSorted, cumEmit,
     hodLoad, hodSolar, hodWind, hodBat, hodPPA, hodGas, hodGrid
@@ -946,6 +1041,15 @@ function simulate(cfg) {
 }
 
 /* ---------- Scenarios ---------- */
+
+// Common defaults for procurement prices. UK 2024-2025 benchmarks.
+// Solar/Wind: LevelTen Q3 2025 UK indices. Firmed baseload around £95.
+// Grid: UK day-ahead average. Gas: TTF + variable O&M dispatched through CCGT.
+// Battery: £250/kWh capex, 12-year life, 7% WACC ≈ £35/kWh-yr annualised.
+const DEFAULT_PRICES = {
+  priceSolar: 72, priceWind: 75, pricePPA: 95,
+  priceGrid: 85, priceGas: 70, priceBattery: 35
+};
 
 const SCENARIOS = [
   {
@@ -960,37 +1064,43 @@ const SCENARIOS = [
       solarMW: 340, windMW: 0,
       batteryE: 0, batteryP: 0,
       gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
-      gridCO2: 380, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+      region: 'uk', gridCO2: 124, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak',
+      priceSolar: 72, priceWind: 75, pricePPA: 95, priceGrid: 85, priceGas: 70, priceBattery: 35,
+      hourlyTarget: 80
     }
   },
   {
     id: 'wind-belt',
     title: 'Wind Belt Manufacturer',
     tag: 'Honest', tagClass: 'warn',
-    description: 'Northern industrial site relying on onshore wind. Decent overall coverage but still exposed during low-wind weeks.',
+    description: 'Northern industrial site on the German grid relying on onshore wind. Decent overall coverage but still exposed during low-wind weeks.',
     storyTitle: 'Wind helps, but does not solve it',
-    storyBody: 'Wind generation aligns better with industrial load than solar does, especially in winter and overnight. The annual claim is genuine. The hourly score reveals the gap during multi-day low-wind synoptic events that no battery alone can span.',
+    storyBody: 'Wind generation aligns better with industrial load than solar does, especially in winter and overnight. The annual claim is genuine. The hourly score reveals the gap during multi-day low-wind synoptic events that no battery alone can span. The German grid intensity makes the residual emissions material.',
     cfg: {
       loadType: 'industrial', loadMW: 30,
       solarMW: 0, windMW: 100,
       batteryE: 0, batteryP: 0,
       gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
-      gridCO2: 320, gasCO2: 380, carbonPrice: 80, gridShape: 'flat'
+      region: 'germany', gridCO2: 309, gasCO2: 380, carbonPrice: 80, gridShape: 'flat',
+      priceSolar: 72, priceWind: 78, pricePPA: 95, priceGrid: 95, priceGas: 70, priceBattery: 35,
+      hourlyTarget: 80
     }
   },
   {
     id: 'battery-rescue',
     title: 'Battery Rescue',
     tag: 'Upgrade story', tagClass: 'good',
-    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score jump.',
-    storyTitle: 'CapEx that makes the claim real',
-    storyBody: 'Storage shifts midday solar into the evening peak. Annual matching is unchanged. Hourly matching transforms, and so does the residual emissions number that regulators will care about.',
+    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score jump, and watch the bill too.',
+    storyTitle: 'CapEx that almost pays for itself',
+    storyBody: 'Storage shifts midday solar into the evening peak. Annual matching is unchanged. Hourly matching transforms, residual emissions drop, and the battery largely pays for itself by capturing solar that would otherwise have been spilled and displacing grid imports at wholesale prices. The economic case is not as bad as it looks at first glance.',
     cfg: {
       loadType: 'datacenter', loadMW: 50,
       solarMW: 340, windMW: 0,
       batteryE: 400, batteryP: 100,
       gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
-      gridCO2: 380, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+      region: 'uk', gridCO2: 124, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak',
+      priceSolar: 72, priceWind: 75, pricePPA: 95, priceGrid: 85, priceGas: 70, priceBattery: 35,
+      hourlyTarget: 80
     }
   },
   {
@@ -999,43 +1109,49 @@ const SCENARIOS = [
     tag: 'Best-in-class', tagClass: 'good',
     description: 'Solar, wind, battery, and a firmed clean baseload PPA. Designed for hourly, not annual.',
     storyTitle: 'What a carbon-free target actually looks like',
-    storyBody: 'A diverse mix is the only thing that gets past 85% hourly. Each component does specific temporal work: solar covers midday, wind covers nights and winter, battery shifts the residual, and the firmed PPA fills the long quiet hours.',
+    storyBody: 'A diverse mix is the only thing that gets past 85% hourly. Each component does specific temporal work: solar covers midday, wind covers nights and winter, battery shifts the residual, and the firmed PPA fills the long quiet hours. The firmed baseload PPA carries a price premium that drives the bill higher than a solar-only portfolio.',
     cfg: {
       loadType: 'datacenter', loadMW: 40,
       solarMW: 85, windMW: 55,
       batteryE: 250, batteryP: 70,
       gasMW: 0, ppaAnnualMWh: 95000, ppaShape: 'flat',
-      gridCO2: 300, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+      region: 'uk', gridCO2: 124, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak',
+      priceSolar: 72, priceWind: 75, pricePPA: 115, priceGrid: 85, priceGas: 70, priceBattery: 35,
+      hourlyTarget: 90
     }
   },
   {
     id: 'gas-honesty',
     title: 'Gas-Backed Industrial',
     tag: 'Transparent', tagClass: 'warn',
-    description: 'Manufacturing site with on-site gas CHP plus modest renewables and a small firmed PPA. Annual and hourly tell the same modest story.',
+    description: 'Manufacturing site on the Polish (coal-heavy) grid with on-site gas CHP and modest renewables. Annual and hourly tell the same modest story.',
     storyTitle: 'When annual and hourly agree, it is usually bad news',
-    storyBody: 'A gas-dominated site has nowhere to hide. Both metrics produce a similar, low number. The value here is in the emissions exposure. At £80/tCO₂ this site\'s carbon cost is material and rising.',
+    storyBody: 'A gas-dominated site on a coal-heavy grid has nowhere to hide. Both matching metrics produce a similar, low number. The value here is in the emissions exposure: at 650 kgCO₂ per grid MWh and £80/tCO₂, the carbon-priced cost is material and rising.',
     cfg: {
       loadType: 'manufacturing', loadMW: 25,
       solarMW: 25, windMW: 0,
       batteryE: 0, batteryP: 0,
       gasMW: 14, ppaAnnualMWh: 40000, ppaShape: 'flat',
-      gridCO2: 420, gasCO2: 390, carbonPrice: 80, gridShape: 'flat'
+      region: 'poland', gridCO2: 650, gasCO2: 390, carbonPrice: 80, gridShape: 'flat',
+      priceSolar: 70, priceWind: 75, pricePPA: 100, priceGrid: 110, priceGas: 75, priceBattery: 35,
+      hourlyTarget: 50
     }
   },
   {
     id: 'geographic-arbitrage',
     title: 'Geographic Arbitrage',
     tag: 'Greenwash risk', tagClass: 'bad',
-    description: '20 MW office buying cheap solar RECs from another timezone. Annual: 100%. Locally, the grid is doing the work.',
+    description: '20 MW UK office buying cheap solar RECs from another timezone. Annual: 100%. Locally, the grid is doing the work.',
     storyTitle: 'Real certificates, fictional matching',
-    storyBody: 'Buying production from a distant solar plant looks identical on annual reporting. Under hourly and deliverability rules being drafted by the GHG Protocol, certificates produced eight hours offset from local load no longer count toward the same hour. The exposure here is reputational as much as regulatory.',
+    storyBody: 'Buying production from a distant solar plant looks identical on annual reporting and is genuinely cheap (£35/MWh, well below local PPA prices). Under hourly and deliverability rules being drafted by the GHG Protocol, certificates produced eight hours offset from local load no longer count toward the same hour. The cost saving today is the reputational exposure tomorrow.',
     cfg: {
       loadType: 'office', loadMW: 20,
       solarMW: 0, windMW: 0,
       batteryE: 0, batteryP: 0,
       gasMW: 0, ppaAnnualMWh: 120000, ppaShape: 'remote-solar',
-      gridCO2: 380, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+      region: 'uk', gridCO2: 124, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak',
+      priceSolar: 72, priceWind: 75, pricePPA: 35, priceGrid: 95, priceGas: 70, priceBattery: 35,
+      hourlyTarget: 80
     }
   }
 ];
@@ -1077,11 +1193,12 @@ function renderScenarios() {
   for (const s of SCENARIOS) {
     const el = document.createElement('button');
     el.className = 'scenario-card' + (s.id === state.scenarioId ? ' active' : '');
+    const regionLabel = (REGIONS.find(r => r.id === s.cfg.region) || {}).label || 'Custom';
     el.innerHTML = `
       <div class="scenario-title">${s.title}<span class="scenario-tag ${s.tagClass || ''}">${s.tag}</span></div>
       <div class="scenario-desc">${s.description}</div>
       <div class="scenario-meta">
-        <b>${s.cfg.loadMW} MW</b> ${s.cfg.loadType} ·
+        <b>${s.cfg.loadMW} MW</b> ${s.cfg.loadType} · <b>${regionLabel}</b> grid ·
         ${s.cfg.solarMW ? `<b>${s.cfg.solarMW} MW</b> solar · ` : ''}
         ${s.cfg.windMW ? `<b>${s.cfg.windMW} MW</b> wind · ` : ''}
         ${s.cfg.batteryE ? `<b>${s.cfg.batteryE}</b> MWh battery · ` : ''}
@@ -1102,6 +1219,11 @@ function renderNarrative() {
 }
 
 /* ---------- Bind config <-> state ---------- */
+function populateRegionDropdown() {
+  const sel = $('#cfg-region');
+  sel.innerHTML = REGIONS.map(r => `<option value="${r.id}">${r.label}${r.id !== 'custom' ? ` · ${r.co2} kg/MWh` : ''}</option>`).join('');
+}
+
 function bindConfigToUI() {
   const c = state.config;
   $('#cfg-loadType').value = c.loadType;
@@ -1113,10 +1235,18 @@ function bindConfigToUI() {
   $('#cfg-batP').value = c.batteryP; $('#v-batP').textContent = c.batteryP;
   $('#cfg-ppa').value = Math.round(c.ppaAnnualMWh / 1000); $('#v-ppa').textContent = Math.round(c.ppaAnnualMWh / 1000);
   $('#cfg-ppaShape').value = c.ppaShape;
+  $('#cfg-region').value = c.region || 'custom';
   $('#cfg-gridco2').value = c.gridCO2; $('#v-gridco2').textContent = c.gridCO2;
   $('#cfg-gasco2').value = c.gasCO2; $('#v-gasco2').textContent = c.gasCO2;
   $('#cfg-carbon').value = c.carbonPrice; $('#v-carbon').textContent = c.carbonPrice;
   $('#cfg-gridShape').value = c.gridShape;
+  $('#cfg-target').value = c.hourlyTarget; $('#v-target').textContent = c.hourlyTarget;
+  $('#cfg-pSolar').value = c.priceSolar; $('#v-pSolar').textContent = c.priceSolar;
+  $('#cfg-pWind').value = c.priceWind; $('#v-pWind').textContent = c.priceWind;
+  $('#cfg-pPPA').value = c.pricePPA; $('#v-pPPA').textContent = c.pricePPA;
+  $('#cfg-pGrid').value = c.priceGrid; $('#v-pGrid').textContent = c.priceGrid;
+  $('#cfg-pGas').value = c.priceGas; $('#v-pGas').textContent = c.priceGas;
+  $('#cfg-pBat').value = c.priceBattery; $('#v-pBat').textContent = c.priceBattery;
 }
 
 function readConfigFromUI() {
@@ -1129,21 +1259,42 @@ function readConfigFromUI() {
   state.config.batteryP = +$('#cfg-batP').value;
   state.config.ppaAnnualMWh = (+$('#cfg-ppa').value) * 1000;
   state.config.ppaShape = $('#cfg-ppaShape').value;
+  state.config.region = $('#cfg-region').value;
   state.config.gridCO2 = +$('#cfg-gridco2').value;
   state.config.gasCO2 = +$('#cfg-gasco2').value;
   state.config.carbonPrice = +$('#cfg-carbon').value;
   state.config.gridShape = $('#cfg-gridShape').value;
+  state.config.hourlyTarget = +$('#cfg-target').value;
+  state.config.priceSolar = +$('#cfg-pSolar').value;
+  state.config.priceWind = +$('#cfg-pWind').value;
+  state.config.pricePPA = +$('#cfg-pPPA').value;
+  state.config.priceGrid = +$('#cfg-pGrid').value;
+  state.config.priceGas = +$('#cfg-pGas').value;
+  state.config.priceBattery = +$('#cfg-pBat').value;
 }
 
 function wireConfigInputs() {
   const ids = [
     ['cfg-load','v-load'],['cfg-solar','v-solar'],['cfg-wind','v-wind'],['cfg-gas','v-gas'],
     ['cfg-batE','v-batE'],['cfg-batP','v-batP'],['cfg-ppa','v-ppa'],
-    ['cfg-gridco2','v-gridco2'],['cfg-gasco2','v-gasco2'],['cfg-carbon','v-carbon']
+    ['cfg-gridco2','v-gridco2'],['cfg-gasco2','v-gasco2'],['cfg-carbon','v-carbon'],
+    ['cfg-target','v-target'],
+    ['cfg-pSolar','v-pSolar'],['cfg-pWind','v-pWind'],['cfg-pPPA','v-pPPA'],
+    ['cfg-pGrid','v-pGrid'],['cfg-pGas','v-pGas'],['cfg-pBat','v-pBat']
   ];
   for (const [inp, lbl] of ids) {
     $('#'+inp).addEventListener('input', e => { $('#'+lbl).textContent = e.target.value; });
   }
+  // Region dropdown updates the grid CO2 slider value.
+  $('#cfg-region').addEventListener('change', e => {
+    const r = REGIONS.find(x => x.id === e.target.value);
+    if (r && r.id !== 'custom') {
+      $('#cfg-gridco2').value = r.co2;
+      $('#v-gridco2').textContent = r.co2;
+    }
+  });
+  // Manually moving the grid CO2 slider switches the region back to Custom.
+  $('#cfg-gridco2').addEventListener('input', () => { $('#cfg-region').value = 'custom'; });
 }
 
 /* ---------- Load scenario ---------- */
@@ -1181,22 +1332,33 @@ function renderAll() {
 }
 
 /* ---------- KPIs ---------- */
+function fmtMoney(x) {
+  // Always show in £ millions with one decimal. e.g. 12.4
+  return (x / 1e6).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
+
 function renderKPIs() {
   const m = state.results.metrics;
   const aPct = m.annualMatch * 100;
   const hPct = m.hourlyMatch * 100;
+  const target = state.config.hourlyTarget;
+
   $('#kpi-annual').textContent = aPct.toFixed(1);
   $('#kpi-hourly').textContent = hPct.toFixed(1);
   $('#kpi-emit').textContent = fmtNum(m.emissions);
   $('#kpi-cost').textContent = fmtNum(m.carbonCost);
+  $('#kpi-bill').textContent = fmtMoney(m.energyBill);
 
   const gap = aPct - hPct;
+  const targetGap = target - hPct;
   $('#kpi-annual-sub').textContent =
     `Procured ${fmtNum(m.cleanTotal)} MWh against ${fmtNum(m.loadTotal)} MWh load`
-    + (m.annualMatchRaw > 1 ? ` · over-procurement ${((m.annualMatchRaw - 1) * 100).toFixed(0)}%` : '');
-  $('#kpi-hourly-sub').textContent = `${gap > 0 ? `${gap.toFixed(1)} pp` : '0'} gap to annual figure`;
-  $('#kpi-emit-sub').textContent = `Grid ${fmtNum(m.gridTotal)} MWh + gas ${fmtNum(m.gasTotal)} MWh`;
-  $('#kpi-cost-sub').textContent = `At £${state.config.carbonPrice}/tCO₂`;
+    + (m.annualMatchRaw > 1 ? `, over-procurement ${((m.annualMatchRaw - 1) * 100).toFixed(0)}%` : '');
+  $('#kpi-hourly-sub').textContent =
+    `${gap > 0 ? `${gap.toFixed(1)} pp` : '0'} gap to annual, ${targetGap > 0 ? `${targetGap.toFixed(1)} pp below ${target}% target` : `on or above ${target}% target`}`;
+  $('#kpi-bill-sub').textContent =
+    `Effective £${m.effectivePricePerMWh.toFixed(0)}/MWh of demand. Solar £${fmtMoney(m.costSolar)}m · Wind £${fmtMoney(m.costWind)}m · PPA £${fmtMoney(m.costPPA)}m · Grid £${fmtMoney(m.costGrid)}m · Gas £${fmtMoney(m.costGas)}m · Battery £${fmtMoney(m.costBattery)}m`;
+  $('#kpi-emit-sub').innerHTML = `At £${state.config.carbonPrice}/tCO₂, £<span id="kpi-cost">${fmtNum(m.carbonCost)}</span>. Grid ${fmtNum(m.gridTotal)} MWh + gas ${fmtNum(m.gasTotal)} MWh.`;
 
   function badge(el, val) {
     el.classList.remove('badge-good','badge-warn','badge-bad');
@@ -1269,14 +1431,26 @@ function renderMonthly() {
   const r = state.results;
   const annual = r.monthly.map(m => +(m.annual * 100).toFixed(1));
   const hourly = r.monthly.map(m => +(m.hourly * 100).toFixed(1));
+  const target = state.config.hourlyTarget;
   if (charts.monthly) charts.monthly.destroy();
   charts.monthly = new Chart($('#chart-monthly'), {
     type: 'bar',
     data: {
       labels: MONTH_NAMES,
       datasets: [
-        { label: 'Annual matching %', data: annual, backgroundColor: 'rgba(246,166,9,0.85)', borderRadius: 4, borderWidth: 0 },
-        { label: 'Hourly matching %', data: hourly, backgroundColor: 'rgba(11,110,88,0.9)', borderRadius: 4, borderWidth: 0 }
+        { label: 'Annual matching %', data: annual, backgroundColor: 'rgba(246,166,9,0.85)', borderRadius: 4, borderWidth: 0, order: 2 },
+        { label: 'Hourly matching %', data: hourly, backgroundColor: 'rgba(11,110,88,0.9)', borderRadius: 4, borderWidth: 0, order: 2 },
+        {
+          type: 'line',
+          label: `Hourly target (${target}%)`,
+          data: new Array(12).fill(target),
+          borderColor: '#c83a3a',
+          borderDash: [5, 5],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          order: 1
+        }
       ]
     },
     options: chartOpts({
@@ -1520,15 +1694,34 @@ function renderReport() {
     ? ` (${((m.annualMatchRaw - 1) * 100).toFixed(0)}% over-procurement, with surplus spilling outside the matching window).`
     : '.';
 
+  const target = state.config.hourlyTarget;
+  const targetGap = target - hPct;
+  const targetLine = targetGap > 0
+    ? `Performance is <b>${targetGap.toFixed(1)} percentage points below</b> the configured hourly target of ${target}%.`
+    : `Performance meets or exceeds the configured hourly target of ${target}%.`;
+
+  const regionLabel = (REGIONS.find(rr => rr.id === state.config.region) || {}).label || 'Custom region';
+
+  // Build cost breakdown line, only showing line items that have meaningful values.
+  const costItems = [];
+  if (m.costSolar > 1) costItems.push(`solar £${fmtMoney(m.costSolar)}m`);
+  if (m.costWind  > 1) costItems.push(`wind £${fmtMoney(m.costWind)}m`);
+  if (m.costPPA   > 1) costItems.push(`PPA £${fmtMoney(m.costPPA)}m`);
+  if (m.costGrid  > 1) costItems.push(`grid £${fmtMoney(m.costGrid)}m`);
+  if (m.costGas   > 1) costItems.push(`gas £${fmtMoney(m.costGas)}m`);
+  if (m.costBattery > 1) costItems.push(`battery amortised £${fmtMoney(m.costBattery)}m`);
+  const costBreakdown = costItems.join(', ');
+
   $('#report-card').innerHTML = `
     <h3>Executive summary: ${s ? s.title : 'Custom scenario'} <span class="scenario-tag ${v.cls}" style="margin-left:8px;vertical-align:middle">${v.text}</span></h3>
-    <p class="lede">Across one year of operation (${fmtNum(m.loadTotal)} MWh of demand), this configuration achieves <b>${aPct.toFixed(1)}%</b> matching under the existing annual market-based methodology, falling to <b>${hPct.toFixed(1)}%</b> under load-weighted hourly matching, a gap of <b>${gap.toFixed(1)} percentage points</b>. Residual emissions total <b>${fmtNum(m.emissions)} tCO₂e</b>, implying a carbon-priced exposure of <b>£${fmtNum(m.carbonCost)}</b> per year at £${state.config.carbonPrice}/tCO₂.</p>
+    <p class="lede">Across one year of operation (${fmtNum(m.loadTotal)} MWh of demand on a <b>${regionLabel}</b> grid at ${state.config.gridCO2} kgCO₂/MWh), this configuration achieves <b>${aPct.toFixed(1)}%</b> matching under the existing annual market-based methodology, falling to <b>${hPct.toFixed(1)}%</b> under load-weighted hourly matching, a gap of <b>${gap.toFixed(1)} percentage points</b>. Annual energy bill totals <b>£${fmtMoney(m.energyBill)}m</b> (effective <b>£${m.effectivePricePerMWh.toFixed(0)}/MWh</b> of demand) with residual emissions of <b>${fmtNum(m.emissions)} tCO₂e</b>, a carbon-priced exposure of <b>£${fmtNum(m.carbonCost)}</b> per year at £${state.config.carbonPrice}/tCO₂.</p>
     <ul class="report-bullets">
       <li>Annual matching of ${aPct.toFixed(1)}% is supported by ${fmtNum(m.cleanTotal)} MWh of clean energy procured against ${fmtNum(m.loadTotal)} MWh of consumption${overprocText}</li>
-      <li>Hourly matching of ${hPct.toFixed(1)}% reflects load-weighted coverage by clean supply delivered in the same hour as demand. Grid imports total ${fmtNum(m.gridTotal)} MWh${m.gasTotal > 1 ? ` and on-site gas ${fmtNum(m.gasTotal)} MWh` : ''}.</li>
+      <li>Hourly matching of ${hPct.toFixed(1)}% reflects load-weighted coverage by clean supply delivered in the same hour as demand. ${targetLine} Grid imports total ${fmtNum(m.gridTotal)} MWh${m.gasTotal > 1 ? ` and on-site gas ${fmtNum(m.gasTotal)} MWh` : ''}.</li>
+      <li>Cost breakdown: ${costBreakdown}. Total bill £${fmtMoney(m.energyBill)}m, total including carbon-priced exposure £${fmtMoney(m.totalAnnualCost)}m.</li>
       <li>The hour-of-day heatmap shows the temporal pattern of uncovered demand: evenings and winter mornings dominate. ${batteryLine}</li>
       <li>Under the GHG Protocol Scope 2 hourly-matching proposal (final standard expected 2027) and SBTi V2 (mandatory for new targets from 1 January 2028), the reportable figure is the hourly number, ${hPct.toFixed(1)}%, not ${aPct.toFixed(1)}%.</li>
-      <li>Sensitivity: every 10 percentage points of additional hourly coverage avoids roughly ${fmtNum(m.emissions * 0.1)} tCO₂e and £${fmtNum(m.carbonCost * 0.1)} of carbon-priced exposure.</li>
+      <li>Sensitivity: every 10 percentage points of additional hourly coverage avoids roughly ${fmtNum(m.emissions * 0.1)} tCO₂e and £${fmtNum(m.carbonCost * 0.1)} of carbon-priced exposure. The cost of closing that gap typically lands at £40-90 per additional tCO₂e avoided, well above the £${state.config.carbonPrice}/tCO₂ carbon price, so the procurement uplift is justified by disclosure compliance rather than carbon pay-back alone.</li>
     </ul>`;
 }
 
@@ -1636,6 +1829,7 @@ function exportCSV() {
 
 /* ---------- Wire up ---------- */
 function init() {
+  populateRegionDropdown();
   renderScenarios();
   bindConfigToUI();
   wireConfigInputs();
