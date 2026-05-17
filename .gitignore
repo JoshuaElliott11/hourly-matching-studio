@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local artefacts
+*.log
+.cache/
+dist/
+node_modules/
+
+# Local exports
+*.csv
+!example*.csv
