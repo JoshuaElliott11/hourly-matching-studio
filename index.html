@@ -1,0 +1,1677 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hourly Matching Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #fbfbfc;
+    --ink: #0b1220;
+    --ink-2: #475569;
+    --ink-3: #94a3b8;
+    --line: #e6e8ec;
+    --line-2: #eef0f3;
+    --brand: #0b6e58;
+    --brand-2: #0a9173;
+    --solar: #f6a609;
+    --wind: #2aa6e8;
+    --battery: #7c5cff;
+    --grid: #98a2b3;
+    --gas: #ee6c2a;
+    --coal: #d33b3b;
+    --clean: #16a37a;
+    --warn: #b8870f;
+    --danger: #c83a3a;
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.05);
+    --shadow-md: 0 6px 18px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv11','ss01','ss03';
+  }
+  .mono { font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; font-feature-settings: 'tnum'; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Layout */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 30;
+  }
+  .brand-mark {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .brand-logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+    display: grid; place-items: center; color: white; font-weight: 700; font-size: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+  .brand-title { font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
+  .brand-subtitle { color: var(--ink-2); font-size: 12px; margin-top: 1px; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all .15s ease;
+  }
+  .btn:hover { background: var(--surface-2); border-color: var(--ink-3); }
+  .btn-primary {
+    background: var(--ink); color: white; border-color: var(--ink);
+  }
+  .btn-primary:hover { background: #1e293b; border-color: #1e293b; }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-ghost:hover { background: var(--surface-2); border-color: var(--line); }
+
+  main { max-width: 1480px; margin: 0 auto; padding: 28px 32px 80px; }
+
+  /* Section header */
+  .section-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin: 32px 0 14px;
+  }
+  .section-header h2 {
+    margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--ink-2);
+  }
+  .section-sub { font-size: 13px; color: var(--ink-2); }
+
+  /* Hero — scenario picker */
+  .hero h1 {
+    font-size: 28px; font-weight: 600; letter-spacing: -.02em; margin: 0 0 4px;
+  }
+  .hero p {
+    color: var(--ink-2); margin: 0; max-width: 760px;
+  }
+  .scenario-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px;
+  }
+  @media (max-width: 1100px) { .scenario-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px)  { .scenario-grid { grid-template-columns: 1fr; } }
+  .scenario-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all .15s ease;
+    text-align: left;
+    font: inherit; color: inherit;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .scenario-card:hover { border-color: var(--brand); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .scenario-card.active {
+    border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand), var(--shadow-md);
+  }
+  .scenario-title { font-weight: 600; font-size: 15px; display: flex; gap: 8px; align-items: center; }
+  .scenario-tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px;
+    background: var(--surface-2); color: var(--ink-2); font-weight: 500;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .scenario-tag.warn { background: #fff5dc; color: #885e00; }
+  .scenario-tag.bad  { background: #fde7e7; color: #9b1c1c; }
+  .scenario-tag.good { background: #dcf5ea; color: #056848; }
+  .scenario-desc { color: var(--ink-2); font-size: 13px; }
+  .scenario-meta { font-size: 11px; color: var(--ink-3); margin-top: auto; }
+  .scenario-meta b { color: var(--ink-2); font-weight: 600; }
+
+  /* Config panel */
+  .config-wrap {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px 24px; box-shadow: var(--shadow-sm);
+  }
+  .config-narrative {
+    background: linear-gradient(180deg, #fbfbfc 0%, #ffffff 100%);
+    border: 1px solid var(--line); border-left: 3px solid var(--brand);
+    border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px;
+  }
+  .config-narrative .nar-title {
+    font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .config-narrative .nar-body { font-size: 14px; color: var(--ink-2); }
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 20px;
+  }
+  @media (max-width: 1100px) { .config-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px)  { .config-grid { grid-template-columns: 1fr; } }
+  .config-group { display: flex; flex-direction: column; gap: 14px; }
+  .config-group h3 {
+    margin: 0 0 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--ink-3);
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label {
+    font-size: 12px; color: var(--ink-2); display: flex; justify-content: space-between; align-items: center;
+  }
+  .field label .val { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .field input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: var(--line); border-radius: 4px; outline: none; margin: 6px 0;
+  }
+  .field input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--brand); cursor: pointer; border: 2px solid white; box-shadow: var(--shadow-sm);
+  }
+  .field input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--brand);
+    cursor: pointer; border: 2px solid white;
+  }
+  .field input[type="number"], .field select {
+    padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+    font-size: 13px; font-family: inherit; background: white;
+  }
+  .field input[type="number"]:focus, .field select:focus { outline: none; border-color: var(--brand); }
+  .file-drop {
+    border: 1.5px dashed var(--line); border-radius: var(--radius-sm);
+    padding: 14px; text-align: center; font-size: 12px; color: var(--ink-2);
+    cursor: pointer; transition: all .15s;
+  }
+  .file-drop:hover { border-color: var(--brand); background: var(--surface-2); color: var(--ink); }
+  .config-actions { margin-top: 18px; display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* KPI cards */
+  .kpi-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 20px; box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .kpi .kpi-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2);
+    font-weight: 600; display: flex; align-items: center; gap: 6px;
+  }
+  .kpi .kpi-value {
+    font-size: 30px; font-weight: 600; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .kpi .kpi-sub { font-size: 12px; color: var(--ink-2); }
+  .kpi.contrast { border-left: 3px solid var(--solar); }
+  .kpi.hourly  { border-left: 3px solid var(--brand); }
+  .kpi.emit    { border-left: 3px solid var(--gas); }
+  .kpi.cost    { border-left: 3px solid var(--coal); }
+  .kpi-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-good { background: #dcf5ea; color: #056848; }
+  .badge-warn { background: #fff5dc; color: #885e00; }
+  .badge-bad  { background: #fde7e7; color: #9b1c1c; }
+
+  /* Cards / charts */
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 22px 24px; box-shadow: var(--shadow-sm);
+  }
+  .card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px; gap: 12px; flex-wrap: wrap;
+  }
+  .card-title { font-size: 15px; font-weight: 600; letter-spacing: -.005em; }
+  .card-sub { color: var(--ink-2); font-size: 13px; margin-bottom: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-2-half { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 1100px) {
+    .grid-2, .grid-3, .grid-2-half { grid-template-columns: 1fr; }
+  }
+  .chart-host { position: relative; height: 320px; }
+  .chart-tall { height: 380px; }
+  .chart-short { height: 220px; }
+
+  /* Tabs */
+  .tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface-2); border-radius: 8px; border: 1px solid var(--line); }
+  .tab {
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;
+    color: var(--ink-2); background: transparent; border: none; font-family: inherit;
+  }
+  .tab.active { background: white; color: var(--ink); box-shadow: var(--shadow-sm); }
+
+  /* Heatmap */
+  .heatmap-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .heatmap-axis-top {
+    display: grid; grid-template-columns: 50px repeat(12, 1fr); gap: 2px;
+    font-size: 10px; color: var(--ink-2); font-weight: 500;
+  }
+  .heatmap-axis-top .lbl { text-align: center; }
+  .heatmap-rows { display: flex; flex-direction: column; gap: 2px; }
+  .heatmap-row { display: grid; grid-template-columns: 50px repeat(12, 1fr); gap: 2px; align-items: center; }
+  .heatmap-row .row-lbl { font-size: 10px; color: var(--ink-2); text-align: right; padding-right: 6px; }
+  .heatmap-cell {
+    aspect-ratio: 2.2 / 1; border-radius: 2px; position: relative;
+    transition: outline .12s;
+  }
+  .heatmap-cell:hover { outline: 2px solid var(--ink); z-index: 5; }
+  .heatmap-legend {
+    display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--ink-2); margin-top: 10px;
+  }
+  .legend-gradient {
+    width: 220px; height: 10px; border-radius: 3px;
+    background: linear-gradient(90deg, #c83a3a 0%, #ee6c2a 25%, #f6a609 50%, #9ab93a 75%, #16a37a 100%);
+  }
+
+  /* Source legend chips */
+  .legend-row { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-top: 12px; }
+  .legend-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Report summary */
+  .report-card {
+    background: linear-gradient(180deg, #fbfbfc 0%, #ffffff 100%);
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 32px;
+  }
+  .report-card h3 {
+    margin: 0 0 6px; font-size: 18px; font-weight: 600; letter-spacing: -.01em;
+  }
+  .report-card .lede { color: var(--ink-2); font-size: 14px; margin-bottom: 18px; max-width: 760px; }
+  .report-bullets { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .report-bullets li {
+    display: flex; gap: 10px; padding-left: 0; font-size: 14px;
+  }
+  .report-bullets li::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--brand); margin-top: 9px; flex-shrink: 0;
+  }
+
+  /* Tooltip-ish hover note */
+  .footnote { font-size: 11px; color: var(--ink-3); margin-top: 8px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--ink); color: white; padding: 12px 18px;
+    border-radius: 8px; font-size: 13px; box-shadow: var(--shadow-md);
+    opacity: 0; pointer-events: none; transition: all .2s;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateY(-2px); }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .topbar { position: static; box-shadow: none; }
+    .topbar-actions, .config-actions, .scenario-grid, .config-wrap { display: none !important; }
+    .card { break-inside: avoid; box-shadow: none; }
+    main { padding: 0 16px; }
+    .section-header { margin-top: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand-mark">
+    <div class="brand-logo">H</div>
+    <div>
+      <div class="brand-title">Hourly Matching Studio</div>
+      <div class="brand-subtitle">24/7 carbon-free matching analysis for corporate procurement</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost" id="btn-csv">Download CSV</button>
+    <button class="btn" id="btn-print">Export report (PDF)</button>
+    <button class="btn btn-primary" id="btn-run">Run simulation</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Scenarios -->
+  <section class="hero">
+    <h1>From annual to hourly: see the story your data really tells.</h1>
+    <p>Compare annual matching against 24/7 hourly carbon-free matching for any portfolio of on-site renewables, PPAs, battery storage, and grid supply. Load a scenario to explore, then upload your own profile.</p>
+    <div class="scenario-grid" id="scenarios"></div>
+  </section>
+
+  <!-- Configuration -->
+  <div class="section-header">
+    <h2>Configuration</h2>
+    <span class="section-sub">Adjust any value and click <b>Run simulation</b>. All units MW for power, MWh for energy, kgCO₂/MWh for emissions.</span>
+  </div>
+
+  <div class="config-wrap">
+    <div class="config-narrative" id="narrative"></div>
+
+    <div class="config-grid">
+      <div class="config-group">
+        <h3>Load</h3>
+        <div class="field">
+          <label>Site type
+            <select id="cfg-loadType">
+              <option value="datacenter">Data centre (24/7 flat)</option>
+              <option value="office">Office / commercial (9–5)</option>
+              <option value="industrial">Industrial (2-shift)</option>
+              <option value="manufacturing">Continuous manufacturing</option>
+            </select>
+          </label>
+        </div>
+        <div class="field">
+          <label>Peak load <span class="val"><span id="v-load">50</span> MW</span></label>
+          <input type="range" id="cfg-load" min="1" max="200" step="1" value="50">
+        </div>
+        <div class="field">
+          <label>Upload your own profile
+            <input type="file" id="cfg-file" accept=".csv,.txt" style="display:none">
+          </label>
+          <div class="file-drop" id="file-drop">CSV: timestamp,kWh (8760 hourly rows)</div>
+        </div>
+      </div>
+
+      <div class="config-group">
+        <h3>On-site generation</h3>
+        <div class="field">
+          <label>Solar PV <span class="val"><span id="v-solar">0</span> MW</span></label>
+          <input type="range" id="cfg-solar" min="0" max="500" step="5" value="0">
+        </div>
+        <div class="field">
+          <label>Wind <span class="val"><span id="v-wind">0</span> MW</span></label>
+          <input type="range" id="cfg-wind" min="0" max="300" step="5" value="0">
+        </div>
+        <div class="field">
+          <label>Gas / CHP <span class="val"><span id="v-gas">0</span> MW</span></label>
+          <input type="range" id="cfg-gas" min="0" max="100" step="1" value="0">
+        </div>
+      </div>
+
+      <div class="config-group">
+        <h3>Battery &amp; PPA</h3>
+        <div class="field">
+          <label>Battery energy <span class="val"><span id="v-batE">0</span> MWh</span></label>
+          <input type="range" id="cfg-batE" min="0" max="1000" step="10" value="0">
+        </div>
+        <div class="field">
+          <label>Battery power <span class="val"><span id="v-batP">0</span> MW</span></label>
+          <input type="range" id="cfg-batP" min="0" max="200" step="5" value="0">
+        </div>
+        <div class="field">
+          <label>Annual PPA (off-site, "annual-matched" RECs)
+            <span class="val"><span id="v-ppa">0</span> GWh/yr</span></label>
+          <input type="range" id="cfg-ppa" min="0" max="2000" step="10" value="0">
+        </div>
+        <div class="field">
+          <label>PPA shape
+            <select id="cfg-ppaShape">
+              <option value="flat">Firmed baseload (24/7 delivery)</option>
+              <option value="solar">Solar-shaped (mid-latitude)</option>
+              <option value="wind">Wind-shaped (onshore)</option>
+              <option value="remote-solar">Distant solar (timezone offset)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="config-group">
+        <h3>Emissions &amp; pricing</h3>
+        <div class="field">
+          <label>Grid CO₂ factor <span class="val"><span id="v-gridco2">400</span> kg/MWh</span></label>
+          <input type="range" id="cfg-gridco2" min="20" max="900" step="10" value="400">
+        </div>
+        <div class="field">
+          <label>Gas CO₂ factor <span class="val"><span id="v-gasco2">380</span> kg/MWh</span></label>
+          <input type="range" id="cfg-gasco2" min="200" max="600" step="10" value="380">
+        </div>
+        <div class="field">
+          <label>Carbon price <span class="val">£<span id="v-carbon">80</span>/tCO₂</span></label>
+          <input type="range" id="cfg-carbon" min="0" max="300" step="5" value="80">
+        </div>
+        <div class="field">
+          <label>Grid intensity profile
+            <select id="cfg-gridShape">
+              <option value="flat">Flat (constant)</option>
+              <option value="evening-peak">Evening peak (renewables daytime)</option>
+              <option value="coal-heavy">Coal-heavy region</option>
+              <option value="hydro-clean">Hydro-clean (low &amp; flat)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-actions">
+      <button class="btn btn-ghost" id="btn-reset">Reset to scenario</button>
+      <button class="btn btn-primary" id="btn-run2">Run simulation →</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="section-header">
+    <h2>Headline metrics</h2>
+    <span class="section-sub">All values cover one full year (8,760 hours).</span>
+  </div>
+  <div class="kpi-row">
+    <div class="kpi contrast">
+      <span class="kpi-label">Annual matching <span class="kpi-badge" id="kpi-annual-badge">—</span></span>
+      <span class="kpi-value"><span id="kpi-annual">—</span>%</span>
+      <span class="kpi-sub" id="kpi-annual-sub">Clean MWh procured ÷ load over the year</span>
+    </div>
+    <div class="kpi hourly">
+      <span class="kpi-label">Hourly (24/7) matching <span class="kpi-badge" id="kpi-hourly-badge">—</span></span>
+      <span class="kpi-value"><span id="kpi-hourly">—</span>%</span>
+      <span class="kpi-sub" id="kpi-hourly-sub">Load-weighted share of hours fully covered by clean energy</span>
+    </div>
+    <div class="kpi emit">
+      <span class="kpi-label">Residual emissions</span>
+      <span class="kpi-value tnum"><span id="kpi-emit">—</span> <span style="font-size: 16px; color: var(--ink-2)">tCO₂e</span></span>
+      <span class="kpi-sub" id="kpi-emit-sub">From grid &amp; gas, after on-site clean offset</span>
+    </div>
+    <div class="kpi cost">
+      <span class="kpi-label">Carbon-priced exposure</span>
+      <span class="kpi-value tnum">£<span id="kpi-cost">—</span></span>
+      <span class="kpi-sub" id="kpi-cost-sub">Annual cost at configured carbon price</span>
+    </div>
+  </div>
+
+  <!-- Headline chart -->
+  <div class="section-header">
+    <h2>Dispatch &amp; coverage</h2>
+    <span class="section-sub">Stacked supply against load. Flip between representative weeks.</span>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Hourly dispatch</div>
+        <div class="card-sub">Stacked clean &amp; firm supply vs site load. The gap above clean stack = unmatched (grid) hours.</div>
+      </div>
+      <div class="tabs" id="week-tabs">
+        <button class="tab active" data-week="winter">Winter week (Jan)</button>
+        <button class="tab" data-week="spring">Spring week (Apr)</button>
+        <button class="tab" data-week="summer">Summer week (Jul)</button>
+        <button class="tab" data-week="autumn">Autumn week (Oct)</button>
+      </div>
+    </div>
+    <div class="chart-host chart-tall"><canvas id="chart-dispatch"></canvas></div>
+    <div class="legend-row">
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--solar)"></span> Solar</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--wind)"></span> Wind</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--battery)"></span> Battery discharge</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--clean)"></span> Clean PPA (shaped)</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--gas)"></span> Gas / CHP</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--grid)"></span> Grid import</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:#0b1220;outline:1px solid #0b1220"></span> Load</span>
+    </div>
+  </div>
+
+  <!-- Monthly + Mix -->
+  <div class="section-header">
+    <h2>Annual vs hourly, month by month</h2>
+    <span class="section-sub">Where the two methods disagree, the gap is the greenwash risk.</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Monthly matching: annual vs hourly</div>
+      <div class="card-sub">Annual: cumulative clean energy ÷ load. Hourly: load-weighted hour-by-hour coverage in the month.</div>
+      <div class="chart-host"><canvas id="chart-monthly"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Energy by source</div>
+      <div class="card-sub">Share of site load served, by source (after dispatch).</div>
+      <div class="chart-host"><canvas id="chart-mix"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Heatmap + Hour-of-day -->
+  <div class="section-header">
+    <h2>When does matching fail?</h2>
+    <span class="section-sub">Patterns matter. A 95% annual score can hide every winter evening uncovered.</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Coverage heatmap · hour-of-day × month</div>
+      <div class="card-sub">Each cell is the share of that hour-of-day in that month covered by clean supply.</div>
+      <div class="heatmap-wrap" id="heatmap"></div>
+      <div class="heatmap-legend">
+        <span>0% covered</span><span class="legend-gradient"></span><span>100% covered</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Average hour-of-day shape</div>
+      <div class="card-sub">Mean MW across the year at each hour. The gap between load and clean stack = grid reliance.</div>
+      <div class="chart-host"><canvas id="chart-hod"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Emissions cumulative + coverage -->
+  <div class="section-header">
+    <h2>Emissions and coverage profile</h2>
+    <span class="section-sub">What regulators and stakeholders will look at: cumulative carbon, and the shape of clean coverage across the year.</span>
+  </div>
+  <div class="grid-2-half">
+    <div class="card">
+      <div class="card-title">Cumulative emissions through the year</div>
+      <div class="card-sub">Each step is one day's grid + gas emissions.</div>
+      <div class="chart-host"><canvas id="chart-emit"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hours of the year by clean-coverage band</div>
+      <div class="card-sub">Every one of the 8,760 hours sorted into a bucket by how much of that hour's demand was actually served by clean supply. Left bars are hours of heavy grid reliance, the right bar is hours running fully on clean energy.</div>
+      <div class="chart-host"><canvas id="chart-duration"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Report summary -->
+  <div class="section-header">
+    <h2>Report-ready summary</h2>
+    <span class="section-sub">Copy directly into stakeholder reports, board papers, or CDP / SBTi disclosures.</span>
+  </div>
+  <div class="report-card" id="report-card"></div>
+
+  <div class="footnote">
+    Methodology · Profiles modelled deterministically from site type, latitude-equivalent solar irradiance, onshore-wind synoptic patterns, and dispatch priority (renewables → battery → gas → grid).
+    Hourly matching scored as Σmin(clean<sub>h</sub>, load<sub>h</sub>) ÷ Σload<sub>h</sub>, in line with the EnergyTag granular-certificate methodology and the GHG Protocol Scope 2 hourly-matching proposal (Oct 2025 consultation draft).
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Hourly Matching Studio
+   Single-file deterministic simulator
+   ========================================================= */
+
+const HOURS = 8760;
+const HOURS_PER_MONTH = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744]; // non-leap
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ---------- Deterministic pseudo-random ---------- */
+function hash(x) {
+  x = (x | 0) ^ 0x9E3779B9;
+  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b);
+  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35);
+  return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
+}
+function rand(seed, i) { return hash(seed * 73856093 + i * 19349663); }
+
+/* ---------- Profile generators ---------- */
+
+function loadProfile(loadType, peakMW, seed = 1) {
+  const data = new Float32Array(HOURS);
+  for (let h = 0; h < HOURS; h++) {
+    const day = Math.floor(h / 24);
+    const dow = day % 7;       // 0..6
+    const hod = h % 24;
+    const doy = day;
+    let f = 1;
+    if (loadType === 'datacenter') {
+      // 0.85 → 1.00 narrow band, slight dip at night
+      f = 0.92 + 0.06 * Math.sin(Math.PI * (hod - 5) / 14) + 0.02 * (rand(seed, h) - 0.5);
+    } else if (loadType === 'office') {
+      const business = (hod >= 8 && hod < 19) ? 1 : 0.28;
+      const weekend = (dow >= 5) ? 0.4 : 1;
+      f = 0.25 + 0.75 * business * weekend;
+    } else if (loadType === 'industrial') {
+      // Two shifts 6-14, 14-22
+      const shift = (hod >= 6 && hod < 22) ? 1 : 0.55;
+      const weekend = (dow >= 5) ? 0.7 : 1;
+      f = 0.55 + 0.45 * shift * weekend;
+    } else if (loadType === 'manufacturing') {
+      // Near-flat continuous
+      f = 0.88 + 0.07 * Math.cos(Math.PI * hod / 12) + 0.02 * (rand(seed, h) - 0.5);
+    }
+    // Heating/cooling seasonal: winter higher (north hemisphere bias for heating + cooling summer for DCs)
+    const heating = 0.06 * Math.cos(2 * Math.PI * (doy - 15) / 365);
+    const cooling = (loadType === 'datacenter' || loadType === 'office')
+      ? 0.05 * Math.cos(2 * Math.PI * (doy - 200) / 365)
+      : 0;
+    f = f * (1 + heating + cooling);
+    data[h] = Math.max(0, peakMW * f);
+  }
+  return data;
+}
+
+function solarProfile(capacityMW, seed = 11, timeshiftHours = 0) {
+  const data = new Float32Array(HOURS);
+  if (capacityMW <= 0) return data;
+  for (let h = 0; h < HOURS; h++) {
+    const doy = Math.floor(h / 24);
+    const hod = ((h + timeshiftHours) % 24 + 24) % 24;
+    // Seasonal — peak around day 172 (June 21 NH); amplitude ~ 0.5–1.1
+    const seasonal = 0.55 + 0.55 * Math.cos(2 * Math.PI * (doy - 172) / 365);
+    // Diurnal — bell from ~6am to ~8pm in summer, narrower in winter
+    const dayLen = 6 + 4 * Math.max(0, Math.cos(2 * Math.PI * (doy - 172) / 365)); // 6h winter, 10h summer half-width
+    const phase = (hod - 12) / dayLen;
+    const diurnal = phase > -1 && phase < 1 ? Math.cos(Math.PI / 2 * phase) ** 2 : 0;
+    // Cloud variability (smoothed multi-octave)
+    const cf = 0.55 + 0.35 * rand(seed, Math.floor(h / 6)) + 0.10 * rand(seed + 1, h);
+    data[h] = Math.max(0, capacityMW * seasonal * diurnal * Math.min(1, cf));
+  }
+  return data;
+}
+
+function windProfile(capacityMW, seed = 23) {
+  const data = new Float32Array(HOURS);
+  if (capacityMW <= 0) return data;
+  // Synoptic (3–5 day weather systems) + diurnal nocturnal jet + seasonal winter peak
+  for (let h = 0; h < HOURS; h++) {
+    const doy = Math.floor(h / 24);
+    const hod = h % 24;
+    const seasonal = 0.55 + 0.45 * Math.cos(2 * Math.PI * (doy - 350) / 365); // peak Dec/Jan
+    const synA = 0.5 + 0.5 * Math.sin(2 * Math.PI * h / (24 * 4.2));
+    const synB = 0.5 + 0.5 * Math.sin(2 * Math.PI * h / (24 * 7.8) + 1.4);
+    const synoptic = 0.4 + 0.6 * (0.6 * synA + 0.4 * synB);
+    const nocturnal = 1 + 0.10 * Math.cos(2 * Math.PI * (hod - 3) / 24);
+    const noise = 0.7 + 0.6 * rand(seed, h);
+    let cf = seasonal * synoptic * nocturnal * noise * 0.75;
+    cf = Math.max(0, Math.min(1, cf));
+    data[h] = capacityMW * cf;
+  }
+  return data;
+}
+
+function ppaProfile(annualMWh, shape) {
+  // Generate a unit-capacity profile then scale so its annual sum = annualMWh
+  let unit;
+  if (shape === 'flat') {
+    unit = new Float32Array(HOURS).fill(1);
+  } else if (shape === 'solar') {
+    unit = solarProfile(1, 41);
+  } else if (shape === 'wind') {
+    unit = windProfile(1, 53);
+  } else if (shape === 'remote-solar') {
+    // Solar but shifted ~8 hours (different time zone — production happens during local night)
+    unit = solarProfile(1, 41, 8);
+  } else {
+    unit = new Float32Array(HOURS).fill(1);
+  }
+  let total = 0;
+  for (let h = 0; h < HOURS; h++) total += unit[h];
+  if (total <= 0) return new Float32Array(HOURS);
+  const scale = annualMWh / total;
+  const out = new Float32Array(HOURS);
+  for (let h = 0; h < HOURS; h++) out[h] = unit[h] * scale;
+  return out;
+}
+
+function gridIntensityProfile(base, shape) {
+  const out = new Float32Array(HOURS);
+  for (let h = 0; h < HOURS; h++) {
+    const hod = h % 24;
+    const doy = Math.floor(h / 24);
+    let f = 1;
+    if (shape === 'evening-peak') {
+      // Renewables peak midday (low intensity), evenings high
+      f = 1 + 0.35 * Math.cos(Math.PI * (hod - 19) / 8);
+      if (hod >= 10 && hod <= 16) f = 0.6 + 0.1 * Math.cos(Math.PI * (hod - 13) / 6);
+    } else if (shape === 'coal-heavy') {
+      f = 1.05 + 0.05 * Math.sin(2 * Math.PI * hod / 24);
+    } else if (shape === 'hydro-clean') {
+      f = 0.85 + 0.05 * Math.sin(2 * Math.PI * doy / 365);
+    } else {
+      f = 1 + 0.02 * Math.sin(2 * Math.PI * hod / 24);
+    }
+    out[h] = Math.max(20, base * f);
+  }
+  return out;
+}
+
+/* ---------- Battery dispatch ----------
+   Charge from surplus clean only; discharge when load > clean.
+   No grid arbitrage. Round-trip efficiency 90%.
+*/
+function simulateBattery(load, cleanGen, energyMWh, powerMW) {
+  const discharge = new Float32Array(HOURS); // positive when supplying load
+  const charge = new Float32Array(HOURS);
+  if (energyMWh <= 0 || powerMW <= 0) return { discharge, charge };
+  const rte = 0.90; const sqrtRte = Math.sqrt(rte);
+  let soc = energyMWh * 0.5;
+  for (let h = 0; h < HOURS; h++) {
+    const surplus = cleanGen[h] - load[h];
+    if (surplus > 0) {
+      const c = Math.min(surplus, powerMW, (energyMWh - soc) / sqrtRte);
+      soc += c * sqrtRte;
+      charge[h] = c;
+    } else if (surplus < 0) {
+      const d = Math.min(-surplus, powerMW, soc * sqrtRte);
+      soc -= d / sqrtRte;
+      discharge[h] = d;
+    }
+  }
+  return { discharge, charge };
+}
+
+/* ---------- Gas dispatch ----------
+   Simple priority: fill gap after clean & battery, capped by capacity.
+*/
+function simulateGas(load, cleanCovered, gasCapMW) {
+  const out = new Float32Array(HOURS);
+  if (gasCapMW <= 0) return out;
+  for (let h = 0; h < HOURS; h++) {
+    const gap = Math.max(0, load[h] - cleanCovered[h]);
+    out[h] = Math.min(gap, gasCapMW);
+  }
+  return out;
+}
+
+/* ---------- Master simulation ---------- */
+function simulate(cfg) {
+  const load = cfg.loadOverride || loadProfile(cfg.loadType, cfg.loadMW);
+  const solar = solarProfile(cfg.solarMW, 11);
+  const wind = windProfile(cfg.windMW, 23);
+  const ppa = ppaProfile(cfg.ppaAnnualMWh, cfg.ppaShape);
+  const gridCO2 = gridIntensityProfile(cfg.gridCO2, cfg.gridShape);
+
+  // Combined clean (on-site renewables + PPA delivered into the same hour, by shape)
+  const cleanGen = new Float32Array(HOURS);
+  for (let h = 0; h < HOURS; h++) cleanGen[h] = solar[h] + wind[h] + ppa[h];
+
+  // Battery — charge from surplus clean; discharge against load deficit
+  const bat = simulateBattery(load, cleanGen, cfg.batteryE, cfg.batteryP);
+
+  // Net clean delivered to load this hour = min(load, clean - charge + discharge)
+  // We treat "delivered" as what is actually consumed by the site this hour.
+  const cleanToLoad = new Float32Array(HOURS);
+  const cleanSpill = new Float32Array(HOURS); // excess
+  for (let h = 0; h < HOURS; h++) {
+    const cleanAvail = cleanGen[h] - bat.charge[h] + bat.discharge[h];
+    const used = Math.min(load[h], cleanAvail);
+    cleanToLoad[h] = used;
+    cleanSpill[h] = Math.max(0, cleanAvail - load[h]);
+  }
+
+  // Gas dispatch fills remaining gap, then grid
+  const gas = simulateGas(load, cleanToLoad, cfg.gasMW);
+  const grid = new Float32Array(HOURS);
+  for (let h = 0; h < HOURS; h++) {
+    grid[h] = Math.max(0, load[h] - cleanToLoad[h] - gas[h]);
+  }
+
+  // Decompose cleanToLoad into solar/wind/battery/ppa portions proportionally (for chart)
+  const solarToLoad = new Float32Array(HOURS);
+  const windToLoad = new Float32Array(HOURS);
+  const batToLoad = new Float32Array(HOURS);
+  const ppaToLoad = new Float32Array(HOURS);
+  for (let h = 0; h < HOURS; h++) {
+    if (cleanToLoad[h] <= 0) continue;
+    // From the combined "available clean to load" pool, prioritise:
+    // solar -> wind -> ppa -> battery discharge (representational)
+    let remaining = cleanToLoad[h];
+    const onSiteOrder = [
+      ['solar', Math.max(0, solar[h] - bat.charge[h] * (solar[h] / Math.max(1e-6, cleanGen[h])))],
+      ['wind',  Math.max(0, wind[h]  - bat.charge[h] * (wind[h]  / Math.max(1e-6, cleanGen[h])))],
+      ['ppa',   Math.max(0, ppa[h]   - bat.charge[h] * (ppa[h]   / Math.max(1e-6, cleanGen[h])))],
+      ['bat',   bat.discharge[h]],
+    ];
+    for (const [name, avail] of onSiteOrder) {
+      const take = Math.min(remaining, avail);
+      if (name === 'solar') solarToLoad[h] = take;
+      else if (name === 'wind') windToLoad[h] = take;
+      else if (name === 'ppa') ppaToLoad[h] = take;
+      else if (name === 'bat') batToLoad[h] = take;
+      remaining -= take;
+      if (remaining <= 1e-6) break;
+    }
+  }
+
+  // Metrics
+  let loadTotal = 0, cleanTotal = 0, cleanMatchedHourly = 0;
+  let gridTotal = 0, gasTotal = 0;
+  let cleanSpillTotal = 0;
+  let emissions = 0;
+  for (let h = 0; h < HOURS; h++) {
+    loadTotal += load[h];
+    gridTotal += grid[h];
+    gasTotal += gas[h];
+    // For annual matching: count ALL procured clean (incl. spill)
+    cleanTotal += solar[h] + wind[h] + ppa[h];
+    cleanMatchedHourly += cleanToLoad[h];
+    cleanSpillTotal += cleanSpill[h];
+    emissions += grid[h] * gridCO2[h] + gas[h] * cfg.gasCO2;
+  }
+  emissions = emissions / 1000; // kg -> tonnes
+  const carbonCost = emissions * cfg.carbonPrice;
+
+  // Monthly metrics
+  const monthly = [];
+  let hStart = 0;
+  for (let m = 0; m < 12; m++) {
+    const hEnd = hStart + HOURS_PER_MONTH[m];
+    let mLoad = 0, mClean = 0, mMatchedHourly = 0;
+    for (let h = hStart; h < hEnd; h++) {
+      mLoad += load[h];
+      mClean += solar[h] + wind[h] + ppa[h];
+      mMatchedHourly += cleanToLoad[h];
+    }
+    monthly.push({
+      annual: mLoad > 0 ? Math.min(1, mClean / mLoad) : 0,
+      annualRaw: mLoad > 0 ? mClean / mLoad : 0,
+      hourly: mLoad > 0 ? mMatchedHourly / mLoad : 0
+    });
+    hStart = hEnd;
+  }
+
+  // Hour-of-day × month heatmap (avg coverage = min(clean, load)/load)
+  const heat = [];
+  for (let hod = 0; hod < 24; hod++) heat.push(new Array(12).fill(0));
+  const heatCounts = [];
+  for (let hod = 0; hod < 24; hod++) heatCounts.push(new Array(12).fill(0));
+  hStart = 0;
+  for (let m = 0; m < 12; m++) {
+    const hEnd = hStart + HOURS_PER_MONTH[m];
+    for (let h = hStart; h < hEnd; h++) {
+      const hod = h % 24;
+      const cov = load[h] > 0 ? Math.min(1, cleanToLoad[h] / load[h]) : 1;
+      heat[hod][m] += cov;
+      heatCounts[hod][m] += 1;
+    }
+    hStart = hEnd;
+  }
+  for (let hod = 0; hod < 24; hod++)
+    for (let m = 0; m < 12; m++)
+      heat[hod][m] = heatCounts[hod][m] > 0 ? heat[hod][m] / heatCounts[hod][m] : 0;
+
+  // Average hour-of-day shape
+  const hodLoad = new Array(24).fill(0);
+  const hodSolar = new Array(24).fill(0);
+  const hodWind = new Array(24).fill(0);
+  const hodBat = new Array(24).fill(0);
+  const hodPPA = new Array(24).fill(0);
+  const hodGas = new Array(24).fill(0);
+  const hodGrid = new Array(24).fill(0);
+  for (let h = 0; h < HOURS; h++) {
+    const hod = h % 24;
+    hodLoad[hod] += load[h];
+    hodSolar[hod] += solarToLoad[h];
+    hodWind[hod] += windToLoad[h];
+    hodBat[hod] += batToLoad[h];
+    hodPPA[hod] += ppaToLoad[h];
+    hodGas[hod] += gas[h];
+    hodGrid[hod] += grid[h];
+  }
+  const daysOfYear = 365;
+  for (let i = 0; i < 24; i++) {
+    hodLoad[i] /= daysOfYear;
+    hodSolar[i] /= daysOfYear;
+    hodWind[i] /= daysOfYear;
+    hodBat[i] /= daysOfYear;
+    hodPPA[i] /= daysOfYear;
+    hodGas[i] /= daysOfYear;
+    hodGrid[i] /= daysOfYear;
+  }
+
+  // Cumulative daily emissions
+  const cumEmit = [];
+  let runEmit = 0;
+  for (let d = 0; d < 365; d++) {
+    let dailyKg = 0;
+    for (let h = d * 24; h < (d + 1) * 24; h++) {
+      dailyKg += grid[h] * gridCO2[h] + gas[h] * cfg.gasCO2;
+    }
+    runEmit += dailyKg / 1000;
+    cumEmit.push(runEmit);
+  }
+
+  // Unmatched (grid) duration curve
+  const gridSorted = Array.from(grid).sort((a, b) => b - a);
+
+  return {
+    load, solar, wind, ppa, gas, grid, bat, cleanToLoad, cleanSpill,
+    solarToLoad, windToLoad, batToLoad, ppaToLoad,
+    metrics: {
+      loadTotal, cleanTotal, cleanMatchedHourly,
+      gridTotal, gasTotal, cleanSpillTotal,
+      annualMatch: loadTotal > 0 ? Math.min(1, cleanTotal / loadTotal) : 0,
+      annualMatchRaw: loadTotal > 0 ? cleanTotal / loadTotal : 0,
+      hourlyMatch: loadTotal > 0 ? cleanMatchedHourly / loadTotal : 0,
+      emissions, carbonCost
+    },
+    monthly, heat, gridSorted, cumEmit,
+    hodLoad, hodSolar, hodWind, hodBat, hodPPA, hodGas, hodGrid
+  };
+}
+
+/* ---------- Scenarios ---------- */
+
+const SCENARIOS = [
+  {
+    id: 'solar-mirage',
+    title: 'Solar Mirage',
+    tag: 'High contrast', tagClass: 'bad',
+    description: '50 MW data centre, oversized solar PPA. Looks fully green on paper. At night and in winter, the lights are kept on by the grid.',
+    storyTitle: 'A textbook annual-vs-hourly disconnect',
+    storyBody: 'A hyperscaler signs a solar PPA sized to its annual consumption. Annual matching reports show 100%. The site runs 24/7, so every night, every cloudy day, and every winter month is served by the grid. Under the proposed GHG Protocol Scope 2 hourly methodology, this site sits well under 40%.',
+    cfg: {
+      loadType: 'datacenter', loadMW: 50,
+      solarMW: 340, windMW: 0,
+      batteryE: 0, batteryP: 0,
+      gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
+      gridCO2: 380, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+    }
+  },
+  {
+    id: 'wind-belt',
+    title: 'Wind Belt Manufacturer',
+    tag: 'Honest', tagClass: 'warn',
+    description: 'Northern industrial site relying on onshore wind. Decent overall coverage but still exposed during low-wind weeks.',
+    storyTitle: 'Wind helps, but does not solve it',
+    storyBody: 'Wind generation aligns better with industrial load than solar does, especially in winter and overnight. The annual claim is genuine. The hourly score reveals the gap during multi-day low-wind synoptic events that no battery alone can span.',
+    cfg: {
+      loadType: 'industrial', loadMW: 30,
+      solarMW: 0, windMW: 100,
+      batteryE: 0, batteryP: 0,
+      gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
+      gridCO2: 320, gasCO2: 380, carbonPrice: 80, gridShape: 'flat'
+    }
+  },
+  {
+    id: 'battery-rescue',
+    title: 'Battery Rescue',
+    tag: 'Upgrade story', tagClass: 'good',
+    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score jump.',
+    storyTitle: 'CapEx that makes the claim real',
+    storyBody: 'Storage shifts midday solar into the evening peak. Annual matching is unchanged. Hourly matching transforms, and so does the residual emissions number that regulators will care about.',
+    cfg: {
+      loadType: 'datacenter', loadMW: 50,
+      solarMW: 340, windMW: 0,
+      batteryE: 400, batteryP: 100,
+      gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
+      gridCO2: 380, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+    }
+  },
+  {
+    id: '247-portfolio',
+    title: '24/7 Portfolio',
+    tag: 'Best-in-class', tagClass: 'good',
+    description: 'Solar, wind, battery, and a firmed clean baseload PPA. Designed for hourly, not annual.',
+    storyTitle: 'What a carbon-free target actually looks like',
+    storyBody: 'A diverse mix is the only thing that gets past 85% hourly. Each component does specific temporal work: solar covers midday, wind covers nights and winter, battery shifts the residual, and the firmed PPA fills the long quiet hours.',
+    cfg: {
+      loadType: 'datacenter', loadMW: 40,
+      solarMW: 85, windMW: 55,
+      batteryE: 250, batteryP: 70,
+      gasMW: 0, ppaAnnualMWh: 95000, ppaShape: 'flat',
+      gridCO2: 300, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+    }
+  },
+  {
+    id: 'gas-honesty',
+    title: 'Gas-Backed Industrial',
+    tag: 'Transparent', tagClass: 'warn',
+    description: 'Manufacturing site with on-site gas CHP plus modest renewables and a small firmed PPA. Annual and hourly tell the same modest story.',
+    storyTitle: 'When annual and hourly agree, it is usually bad news',
+    storyBody: 'A gas-dominated site has nowhere to hide. Both metrics produce a similar, low number. The value here is in the emissions exposure. At £80/tCO₂ this site\'s carbon cost is material and rising.',
+    cfg: {
+      loadType: 'manufacturing', loadMW: 25,
+      solarMW: 25, windMW: 0,
+      batteryE: 0, batteryP: 0,
+      gasMW: 14, ppaAnnualMWh: 40000, ppaShape: 'flat',
+      gridCO2: 420, gasCO2: 390, carbonPrice: 80, gridShape: 'flat'
+    }
+  },
+  {
+    id: 'geographic-arbitrage',
+    title: 'Geographic Arbitrage',
+    tag: 'Greenwash risk', tagClass: 'bad',
+    description: '20 MW office buying cheap solar RECs from another timezone. Annual: 100%. Locally, the grid is doing the work.',
+    storyTitle: 'Real certificates, fictional matching',
+    storyBody: 'Buying production from a distant solar plant looks identical on annual reporting. Under hourly and deliverability rules being drafted by the GHG Protocol, certificates produced eight hours offset from local load no longer count toward the same hour. The exposure here is reputational as much as regulatory.',
+    cfg: {
+      loadType: 'office', loadMW: 20,
+      solarMW: 0, windMW: 0,
+      batteryE: 0, batteryP: 0,
+      gasMW: 0, ppaAnnualMWh: 120000, ppaShape: 'remote-solar',
+      gridCO2: 380, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak'
+    }
+  }
+];
+
+/* ---------- State ---------- */
+
+const state = {
+  scenarioId: 'solar-mirage',
+  config: { ...SCENARIOS[0].cfg },
+  uploadedLoad: null,
+  results: null,
+  week: 'winter'
+};
+
+const charts = {};
+
+/* ---------- DOM helpers ---------- */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function fmtNum(x, dp = 0) {
+  if (!isFinite(x)) return '—';
+  return x.toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+}
+function fmtPct(x) { return (x * 100).toFixed(1); }
+
+/* ---------- Render: scenarios ---------- */
+function renderScenarios() {
+  const wrap = $('#scenarios');
+  wrap.innerHTML = '';
+  for (const s of SCENARIOS) {
+    const el = document.createElement('button');
+    el.className = 'scenario-card' + (s.id === state.scenarioId ? ' active' : '');
+    el.innerHTML = `
+      <div class="scenario-title">${s.title}<span class="scenario-tag ${s.tagClass || ''}">${s.tag}</span></div>
+      <div class="scenario-desc">${s.description}</div>
+      <div class="scenario-meta">
+        <b>${s.cfg.loadMW} MW</b> ${s.cfg.loadType} ·
+        ${s.cfg.solarMW ? `<b>${s.cfg.solarMW} MW</b> solar · ` : ''}
+        ${s.cfg.windMW ? `<b>${s.cfg.windMW} MW</b> wind · ` : ''}
+        ${s.cfg.batteryE ? `<b>${s.cfg.batteryE}</b> MWh battery · ` : ''}
+        ${s.cfg.gasMW ? `<b>${s.cfg.gasMW} MW</b> gas · ` : ''}
+        ${s.cfg.ppaAnnualMWh ? `<b>${(s.cfg.ppaAnnualMWh/1000).toFixed(0)}</b> GWh PPA` : ''}
+      </div>`;
+    el.addEventListener('click', () => loadScenario(s.id));
+    wrap.appendChild(el);
+  }
+}
+
+function renderNarrative() {
+  const s = SCENARIOS.find(x => x.id === state.scenarioId);
+  if (!s) return;
+  $('#narrative').innerHTML = `
+    <div class="nar-title">${s.storyTitle}</div>
+    <div class="nar-body">${s.storyBody}</div>`;
+}
+
+/* ---------- Bind config <-> state ---------- */
+function bindConfigToUI() {
+  const c = state.config;
+  $('#cfg-loadType').value = c.loadType;
+  $('#cfg-load').value = c.loadMW; $('#v-load').textContent = c.loadMW;
+  $('#cfg-solar').value = c.solarMW; $('#v-solar').textContent = c.solarMW;
+  $('#cfg-wind').value = c.windMW; $('#v-wind').textContent = c.windMW;
+  $('#cfg-gas').value = c.gasMW; $('#v-gas').textContent = c.gasMW;
+  $('#cfg-batE').value = c.batteryE; $('#v-batE').textContent = c.batteryE;
+  $('#cfg-batP').value = c.batteryP; $('#v-batP').textContent = c.batteryP;
+  $('#cfg-ppa').value = Math.round(c.ppaAnnualMWh / 1000); $('#v-ppa').textContent = Math.round(c.ppaAnnualMWh / 1000);
+  $('#cfg-ppaShape').value = c.ppaShape;
+  $('#cfg-gridco2').value = c.gridCO2; $('#v-gridco2').textContent = c.gridCO2;
+  $('#cfg-gasco2').value = c.gasCO2; $('#v-gasco2').textContent = c.gasCO2;
+  $('#cfg-carbon').value = c.carbonPrice; $('#v-carbon').textContent = c.carbonPrice;
+  $('#cfg-gridShape').value = c.gridShape;
+}
+
+function readConfigFromUI() {
+  state.config.loadType = $('#cfg-loadType').value;
+  state.config.loadMW = +$('#cfg-load').value;
+  state.config.solarMW = +$('#cfg-solar').value;
+  state.config.windMW = +$('#cfg-wind').value;
+  state.config.gasMW = +$('#cfg-gas').value;
+  state.config.batteryE = +$('#cfg-batE').value;
+  state.config.batteryP = +$('#cfg-batP').value;
+  state.config.ppaAnnualMWh = (+$('#cfg-ppa').value) * 1000;
+  state.config.ppaShape = $('#cfg-ppaShape').value;
+  state.config.gridCO2 = +$('#cfg-gridco2').value;
+  state.config.gasCO2 = +$('#cfg-gasco2').value;
+  state.config.carbonPrice = +$('#cfg-carbon').value;
+  state.config.gridShape = $('#cfg-gridShape').value;
+}
+
+function wireConfigInputs() {
+  const ids = [
+    ['cfg-load','v-load'],['cfg-solar','v-solar'],['cfg-wind','v-wind'],['cfg-gas','v-gas'],
+    ['cfg-batE','v-batE'],['cfg-batP','v-batP'],['cfg-ppa','v-ppa'],
+    ['cfg-gridco2','v-gridco2'],['cfg-gasco2','v-gasco2'],['cfg-carbon','v-carbon']
+  ];
+  for (const [inp, lbl] of ids) {
+    $('#'+inp).addEventListener('input', e => { $('#'+lbl).textContent = e.target.value; });
+  }
+}
+
+/* ---------- Load scenario ---------- */
+function loadScenario(id) {
+  const s = SCENARIOS.find(x => x.id === id);
+  if (!s) return;
+  state.scenarioId = id;
+  state.config = { ...s.cfg };
+  state.uploadedLoad = null;
+  bindConfigToUI();
+  renderScenarios();
+  renderNarrative();
+  run();
+}
+
+/* ---------- Run simulation & render ---------- */
+function run() {
+  readConfigFromUI();
+  const cfg = { ...state.config };
+  if (state.uploadedLoad) cfg.loadOverride = state.uploadedLoad;
+  state.results = simulate(cfg);
+  renderAll();
+}
+
+function renderAll() {
+  renderKPIs();
+  renderDispatch();
+  renderMonthly();
+  renderMix();
+  renderHeatmap();
+  renderHOD();
+  renderEmissions();
+  renderDuration();
+  renderReport();
+}
+
+/* ---------- KPIs ---------- */
+function renderKPIs() {
+  const m = state.results.metrics;
+  const aPct = m.annualMatch * 100;
+  const hPct = m.hourlyMatch * 100;
+  $('#kpi-annual').textContent = aPct.toFixed(1);
+  $('#kpi-hourly').textContent = hPct.toFixed(1);
+  $('#kpi-emit').textContent = fmtNum(m.emissions);
+  $('#kpi-cost').textContent = fmtNum(m.carbonCost);
+
+  const gap = aPct - hPct;
+  $('#kpi-annual-sub').textContent =
+    `Procured ${fmtNum(m.cleanTotal)} MWh against ${fmtNum(m.loadTotal)} MWh load`
+    + (m.annualMatchRaw > 1 ? ` · over-procurement ${((m.annualMatchRaw - 1) * 100).toFixed(0)}%` : '');
+  $('#kpi-hourly-sub').textContent = `${gap > 0 ? `${gap.toFixed(1)} pp` : '0'} gap to annual figure`;
+  $('#kpi-emit-sub').textContent = `Grid ${fmtNum(m.gridTotal)} MWh + gas ${fmtNum(m.gasTotal)} MWh`;
+  $('#kpi-cost-sub').textContent = `At £${state.config.carbonPrice}/tCO₂`;
+
+  function badge(el, val) {
+    el.classList.remove('badge-good','badge-warn','badge-bad');
+    if (val >= 0.95) { el.classList.add('badge-good'); el.textContent = 'Excellent'; }
+    else if (val >= 0.75) { el.classList.add('badge-good'); el.textContent = 'Strong'; }
+    else if (val >= 0.5) { el.classList.add('badge-warn'); el.textContent = 'Partial'; }
+    else { el.classList.add('badge-bad'); el.textContent = 'Weak'; }
+  }
+  badge($('#kpi-annual-badge'), m.annualMatch);
+  badge($('#kpi-hourly-badge'), m.hourlyMatch);
+}
+
+/* ---------- Dispatch chart ---------- */
+function weekRange(which) {
+  // Pick a 168-hour window starting at given dayOfYear
+  const starts = { winter: 14, spring: 105, summer: 196, autumn: 287 };
+  const startHour = starts[which] * 24;
+  return [startHour, startHour + 168];
+}
+
+function renderDispatch() {
+  const [s, e] = weekRange(state.week);
+  const labels = []; for (let i = 0; i < (e - s); i++) labels.push(i);
+  const r = state.results;
+  const slice = (arr) => Array.from(arr.slice(s, e));
+
+  const data = {
+    labels,
+    datasets: [
+      stacked('Solar', slice(r.solarToLoad), 'var-solar', 'rgba(246,166,9,0.85)'),
+      stacked('Wind', slice(r.windToLoad), 'var-wind', 'rgba(42,166,232,0.85)'),
+      stacked('Battery', slice(r.batToLoad), 'var-bat', 'rgba(124,92,255,0.85)'),
+      stacked('Clean PPA', slice(r.ppaToLoad), 'var-clean', 'rgba(22,163,122,0.85)'),
+      stacked('Gas', slice(r.gas), 'var-gas', 'rgba(238,108,42,0.85)'),
+      stacked('Grid', slice(r.grid), 'var-grid', 'rgba(152,162,179,0.85)'),
+      {
+        type: 'line', label: 'Load', data: slice(r.load),
+        borderColor: '#0b1220', borderWidth: 1.5,
+        pointRadius: 0, tension: 0.18, fill: false, order: 0
+      }
+    ]
+  };
+
+  if (charts.dispatch) charts.dispatch.destroy();
+  charts.dispatch = new Chart($('#chart-dispatch'), {
+    type: 'bar',
+    data,
+    options: chartOpts({
+      stacked: true,
+      yTitle: 'MW',
+      xTitle: 'Hour (representative week)',
+      xTicks: { callback: (v) => {
+        const d = Math.floor(v / 24);
+        return v % 24 === 12 ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d] : '';
+      }, maxRotation: 0, autoSkip: false }
+    })
+  });
+}
+
+function stacked(label, data, _v, colour) {
+  return {
+    type: 'bar', label, data,
+    backgroundColor: colour, borderWidth: 0,
+    stack: 'supply', categoryPercentage: 1.0, barPercentage: 1.0, order: 1
+  };
+}
+
+/* ---------- Monthly bar ---------- */
+function renderMonthly() {
+  const r = state.results;
+  const annual = r.monthly.map(m => +(m.annual * 100).toFixed(1));
+  const hourly = r.monthly.map(m => +(m.hourly * 100).toFixed(1));
+  if (charts.monthly) charts.monthly.destroy();
+  charts.monthly = new Chart($('#chart-monthly'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_NAMES,
+      datasets: [
+        { label: 'Annual matching %', data: annual, backgroundColor: 'rgba(246,166,9,0.85)', borderRadius: 4, borderWidth: 0 },
+        { label: 'Hourly matching %', data: hourly, backgroundColor: 'rgba(11,110,88,0.9)', borderRadius: 4, borderWidth: 0 }
+      ]
+    },
+    options: chartOpts({
+      yTitle: '% covered', yMax: 100,
+      yTicks: { callback: v => v + '%' }
+    })
+  });
+}
+
+/* ---------- Mix donut ---------- */
+function renderMix() {
+  const r = state.results;
+  let solar = 0, wind = 0, bat = 0, ppa = 0, gas = 0, grid = 0;
+  for (let h = 0; h < HOURS; h++) {
+    solar += r.solarToLoad[h]; wind += r.windToLoad[h]; bat += r.batToLoad[h];
+    ppa += r.ppaToLoad[h]; gas += r.gas[h]; grid += r.grid[h];
+  }
+  const labels = ['Solar','Wind','Battery','Clean PPA','Gas','Grid'];
+  const data = [solar, wind, bat, ppa, gas, grid];
+  const colours = ['#f6a609','#2aa6e8','#7c5cff','#16a37a','#ee6c2a','#98a2b3'];
+  // Drop zero entries
+  const filtered = labels.map((l, i) => ({l, v: data[i], c: colours[i]})).filter(x => x.v > 1);
+  if (charts.mix) charts.mix.destroy();
+  charts.mix = new Chart($('#chart-mix'), {
+    type: 'doughnut',
+    data: {
+      labels: filtered.map(x => x.l),
+      datasets: [{ data: filtered.map(x => x.v), backgroundColor: filtered.map(x => x.c), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      cutout: '64%', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { font: { family: 'Inter', size: 12 }, color: '#475569', boxWidth: 10, boxHeight: 10 } },
+        tooltip: { callbacks: { label: c => {
+          const total = c.dataset.data.reduce((a,b)=>a+b, 0);
+          return `${c.label}: ${fmtNum(c.parsed)} MWh (${((c.parsed/total)*100).toFixed(1)}%)`;
+        }}}
+      }
+    }
+  });
+}
+
+/* ---------- Heatmap ---------- */
+function colourFor(p) {
+  // 0 → red, 0.5 → amber, 1 → green
+  const stops = [
+    [0.00, [200,58,58]],
+    [0.25, [238,108,42]],
+    [0.50, [246,166,9]],
+    [0.75, [154,185,58]],
+    [1.00, [22,163,122]]
+  ];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (p <= stops[i+1][0]) {
+      const t = (p - stops[i][0]) / (stops[i+1][0] - stops[i][0]);
+      const a = stops[i][1], b = stops[i+1][1];
+      return `rgb(${a[0]+(b[0]-a[0])*t|0}, ${a[1]+(b[1]-a[1])*t|0}, ${a[2]+(b[2]-a[2])*t|0})`;
+    }
+  }
+  return 'rgb(22,163,122)';
+}
+
+function renderHeatmap() {
+  const r = state.results;
+  const wrap = $('#heatmap');
+  let html = '<div class="heatmap-axis-top"><div></div>';
+  for (let m = 0; m < 12; m++) html += `<div class="lbl">${MONTH_NAMES[m]}</div>`;
+  html += '</div><div class="heatmap-rows">';
+  for (let hod = 23; hod >= 0; hod--) {
+    const lbl = (hod % 3 === 0) ? `${hod.toString().padStart(2,'0')}:00` : '';
+    html += `<div class="heatmap-row"><div class="row-lbl">${lbl}</div>`;
+    for (let m = 0; m < 12; m++) {
+      const p = r.heat[hod][m];
+      html += `<div class="heatmap-cell" style="background:${colourFor(p)}" title="${MONTH_NAMES[m]} ${hod.toString().padStart(2,'0')}:00, ${(p*100).toFixed(0)}% covered"></div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+/* ---------- Hour-of-day chart ---------- */
+function renderHOD() {
+  const r = state.results;
+  const labels = []; for (let i = 0; i < 24; i++) labels.push(i.toString().padStart(2,'0'));
+  if (charts.hod) charts.hod.destroy();
+  charts.hod = new Chart($('#chart-hod'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        stacked('Solar', r.hodSolar, null, 'rgba(246,166,9,0.85)'),
+        stacked('Wind', r.hodWind, null, 'rgba(42,166,232,0.85)'),
+        stacked('Battery', r.hodBat, null, 'rgba(124,92,255,0.85)'),
+        stacked('Clean PPA', r.hodPPA, null, 'rgba(22,163,122,0.85)'),
+        stacked('Gas', r.hodGas, null, 'rgba(238,108,42,0.85)'),
+        stacked('Grid', r.hodGrid, null, 'rgba(152,162,179,0.85)'),
+        { type: 'line', label: 'Load', data: r.hodLoad, borderColor: '#0b1220', borderWidth: 1.5, pointRadius: 0, tension: 0.25, fill: false, order: 0 }
+      ]
+    },
+    options: chartOpts({
+      stacked: true, yTitle: 'Average MW',
+      xTitle: 'Hour of day'
+    })
+  });
+}
+
+/* ---------- Emissions cumulative ---------- */
+function renderEmissions() {
+  const r = state.results;
+  const labels = []; for (let d = 0; d < 365; d++) labels.push(d);
+  if (charts.emit) charts.emit.destroy();
+  charts.emit = new Chart($('#chart-emit'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Cumulative tCO₂e',
+        data: r.cumEmit,
+        borderColor: '#ee6c2a', backgroundColor: 'rgba(238,108,42,0.15)',
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.1
+      }]
+    },
+    options: chartOpts({
+      yTitle: 'tCO₂e',
+      xTitle: 'Day of year',
+      xTicks: { callback: v => {
+        const m = MONTH_NAMES.findIndex((_, idx) => {
+          let cum = 0; for (let i = 0; i <= idx; i++) cum += HOURS_PER_MONTH[i] / 24;
+          return v < cum;
+        });
+        let cumPrev = 0; for (let i = 0; i < (m < 0 ? 12 : m); i++) cumPrev += HOURS_PER_MONTH[i] / 24;
+        return v === Math.floor(cumPrev) ? MONTH_NAMES[m < 0 ? 11 : m] : '';
+      }, autoSkip: false, maxRotation: 0 }
+    })
+  });
+}
+
+/* ---------- Coverage histogram ----------
+   Bucket every hour of the year by how much of that hour's demand
+   was served by clean supply. Far more intuitive than a duration curve.
+*/
+function renderDuration() {
+  const r = state.results;
+  const bins = [0, 0, 0, 0, 0, 0];
+  let totalHours = 0;
+  for (let h = 0; h < HOURS; h++) {
+    if (r.load[h] <= 0) continue;
+    totalHours++;
+    const cov = Math.min(1, r.cleanToLoad[h] / r.load[h]);
+    if (cov <= 0.001) bins[0]++;
+    else if (cov < 0.25) bins[1]++;
+    else if (cov < 0.5) bins[2]++;
+    else if (cov < 0.75) bins[3]++;
+    else if (cov < 0.999) bins[4]++;
+    else bins[5]++;
+  }
+  const labels = ['Grid only', '1 to 25%', '25 to 50%', '50 to 75%', '75 to 99%', '100% clean'];
+  const colours = ['#c83a3a','#ee6c2a','#f6a609','#cfd14f','#9ab93a','#16a37a'];
+  if (charts.dur) charts.dur.destroy();
+  charts.dur = new Chart($('#chart-duration'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Hours of the year',
+        data: bins,
+        backgroundColor: colours,
+        borderWidth: 0,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(11,18,32,0.95)', titleColor: '#fff', bodyColor: '#e2e8f0',
+          padding: 10, cornerRadius: 6,
+          callbacks: {
+            label: c => {
+              const hrs = c.parsed.y;
+              const pct = totalHours > 0 ? (hrs / totalHours * 100).toFixed(1) : '0';
+              return `${fmtNum(hrs)} hours (${pct}% of year)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false }, border: { color: '#e6e8ec' },
+          ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } },
+          title: { display: true, text: 'Share of that hour\'s demand met by clean supply', color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#eef0f3', drawBorder: false }, border: { display: false },
+          ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, callback: v => fmtNum(v) },
+          title: { display: true, text: 'Hours of the year', color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+/* ---------- Verdict ----------
+   Considers both axes and the gap between them.
+   The gap is the greenwash signal: when annual is much higher than hourly,
+   the annual headline is materially overstating real coverage.
+*/
+function verdict(aPct, hPct) {
+  const gap = aPct - hPct;
+  if (gap >= 45 && aPct >= 70) {
+    return { text: 'Annual headline significantly overstates same-hour coverage', cls: 'bad' };
+  }
+  if (gap >= 25 && aPct >= 65) {
+    return { text: 'Annual figure materially diverges from hourly coverage', cls: 'warn' };
+  }
+  if (hPct >= 85) return { text: 'Strong on both methodologies, fit for 24/7 disclosure', cls: 'good' };
+  if (hPct >= 65) return { text: 'Solid hourly coverage with limited residual exposure', cls: 'good' };
+  if (hPct >= 40) return { text: 'Partial coverage, both methods broadly agree', cls: 'warn' };
+  if (hPct >= 20) return { text: 'Limited clean coverage, small relative to load', cls: 'warn' };
+  return { text: 'Minimal hourly coverage, heavy grid reliance year-round', cls: 'bad' };
+}
+
+/* ---------- Report card ---------- */
+function renderReport() {
+  const s = SCENARIOS.find(x => x.id === state.scenarioId);
+  const m = state.results.metrics;
+  const aPct = m.annualMatch * 100;
+  const hPct = m.hourlyMatch * 100;
+  const gap = aPct - hPct;
+  const v = verdict(aPct, hPct);
+
+  const batteryLine = state.config.batteryE > 0
+    ? `${state.config.batteryE} MWh of battery storage materially flattens this pattern.`
+    : 'There is no battery storage to flatten the temporal mismatch.';
+
+  const overprocText = m.annualMatchRaw > 1
+    ? ` (${((m.annualMatchRaw - 1) * 100).toFixed(0)}% over-procurement, with surplus spilling outside the matching window).`
+    : '.';
+
+  $('#report-card').innerHTML = `
+    <h3>Executive summary: ${s ? s.title : 'Custom scenario'} <span class="scenario-tag ${v.cls}" style="margin-left:8px;vertical-align:middle">${v.text}</span></h3>
+    <p class="lede">Across one year of operation (${fmtNum(m.loadTotal)} MWh of demand), this configuration achieves <b>${aPct.toFixed(1)}%</b> matching under the existing annual market-based methodology, falling to <b>${hPct.toFixed(1)}%</b> under load-weighted hourly matching, a gap of <b>${gap.toFixed(1)} percentage points</b>. Residual emissions total <b>${fmtNum(m.emissions)} tCO₂e</b>, implying a carbon-priced exposure of <b>£${fmtNum(m.carbonCost)}</b> per year at £${state.config.carbonPrice}/tCO₂.</p>
+    <ul class="report-bullets">
+      <li>Annual matching of ${aPct.toFixed(1)}% is supported by ${fmtNum(m.cleanTotal)} MWh of clean energy procured against ${fmtNum(m.loadTotal)} MWh of consumption${overprocText}</li>
+      <li>Hourly matching of ${hPct.toFixed(1)}% reflects load-weighted coverage by clean supply delivered in the same hour as demand. Grid imports total ${fmtNum(m.gridTotal)} MWh${m.gasTotal > 1 ? ` and on-site gas ${fmtNum(m.gasTotal)} MWh` : ''}.</li>
+      <li>The hour-of-day heatmap shows the temporal pattern of uncovered demand: evenings and winter mornings dominate. ${batteryLine}</li>
+      <li>Under the GHG Protocol Scope 2 hourly-matching proposal (final standard expected 2027) and SBTi V2 (mandatory for new targets from 1 January 2028), the reportable figure is the hourly number, ${hPct.toFixed(1)}%, not ${aPct.toFixed(1)}%.</li>
+      <li>Sensitivity: every 10 percentage points of additional hourly coverage avoids roughly ${fmtNum(m.emissions * 0.1)} tCO₂e and £${fmtNum(m.carbonCost * 0.1)} of carbon-priced exposure.</li>
+    </ul>`;
+}
+
+/* ---------- Chart base options ---------- */
+function chartOpts({ stacked = false, yTitle = '', xTitle = '', yMax = null, xTicks = {}, yTicks = {} } = {}) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    animation: { duration: 300 },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(11,18,32,0.95)', titleColor: '#fff', bodyColor: '#e2e8f0',
+        padding: 10, cornerRadius: 6, titleFont: { weight: '600', family: 'Inter' }, bodyFont: { family: 'Inter' },
+        callbacks: {
+          label: c => `${c.dataset.label}: ${fmtNum(c.parsed.y, 1)} ${yTitle.includes('%') ? '%' : 'MW'}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        stacked,
+        grid: { display: false }, border: { color: '#e6e8ec' },
+        ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, ...xTicks },
+        title: xTitle ? { display: true, text: xTitle, color: '#94a3b8', font: { family: 'Inter', size: 11 } } : undefined
+      },
+      y: {
+        stacked, beginAtZero: true, max: yMax || undefined,
+        grid: { color: '#eef0f3', drawBorder: false }, border: { display: false },
+        ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, ...yTicks },
+        title: yTitle ? { display: true, text: yTitle, color: '#94a3b8', font: { family: 'Inter', size: 11 } } : undefined
+      }
+    }
+  };
+}
+
+/* ---------- CSV upload ---------- */
+function handleCSV(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    // Detect: try column "kwh" or "load" or second column or first numeric
+    let arr = [];
+    for (const line of lines) {
+      const parts = line.split(/[,;\t]/).map(p => p.trim());
+      if (parts.length === 0) continue;
+      let v = NaN;
+      // try every column
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const n = parseFloat(parts[i].replace(/[^\d.eE\-+]/g, ''));
+        if (isFinite(n)) { v = n; break; }
+      }
+      if (isFinite(v)) arr.push(v);
+    }
+    // Strip header if needed
+    if (arr.length > HOURS) arr = arr.slice(0, HOURS);
+    if (arr.length < 100) { toast(`Could not parse: only ${arr.length} numeric rows found`); return; }
+    // Convert kWh → MW for hourly data: 1 kWh in 1h = 0.001 MW; treat raw as MW if max > 1000
+    const max = Math.max(...arr);
+    let asMW;
+    if (max > 1000) asMW = arr.map(v => v / 1000); // looks like kWh
+    else asMW = arr;
+    // Pad / truncate to 8760
+    if (asMW.length < HOURS) {
+      const padded = new Float32Array(HOURS);
+      for (let h = 0; h < HOURS; h++) padded[h] = asMW[h % asMW.length];
+      asMW = padded;
+    } else {
+      asMW = Float32Array.from(asMW.slice(0, HOURS));
+    }
+    state.uploadedLoad = asMW;
+    toast(`Loaded ${file.name} (${arr.length} rows) → using as load profile`);
+    run();
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- CSV export ---------- */
+function exportCSV() {
+  const r = state.results;
+  const lines = ['hour,load_MW,solar_MW,wind_MW,battery_MW,clean_PPA_MW,gas_MW,grid_MW,clean_to_load_MW,clean_spill_MW'];
+  for (let h = 0; h < HOURS; h++) {
+    lines.push([
+      h,
+      r.load[h].toFixed(3),
+      r.solar[h].toFixed(3),
+      r.wind[h].toFixed(3),
+      r.bat.discharge[h].toFixed(3),
+      r.ppa[h].toFixed(3),
+      r.gas[h].toFixed(3),
+      r.grid[h].toFixed(3),
+      r.cleanToLoad[h].toFixed(3),
+      r.cleanSpill[h].toFixed(3)
+    ].join(','));
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `hourly-matching-${state.scenarioId}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV exported (8,760 hourly rows)');
+}
+
+/* ---------- Wire up ---------- */
+function init() {
+  renderScenarios();
+  bindConfigToUI();
+  wireConfigInputs();
+  renderNarrative();
+
+  $('#btn-run').addEventListener('click', run);
+  $('#btn-run2').addEventListener('click', run);
+  $('#btn-reset').addEventListener('click', () => loadScenario(state.scenarioId));
+  $('#btn-csv').addEventListener('click', exportCSV);
+  $('#btn-print').addEventListener('click', () => window.print());
+
+  // Week tabs
+  $$('#week-tabs .tab').forEach(t => t.addEventListener('click', () => {
+    $$('#week-tabs .tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    state.week = t.dataset.week;
+    renderDispatch();
+  }));
+
+  // File upload
+  const drop = $('#file-drop');
+  const file = $('#cfg-file');
+  drop.addEventListener('click', () => file.click());
+  file.addEventListener('change', e => {
+    if (e.target.files[0]) handleCSV(e.target.files[0]);
+  });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.borderColor = 'var(--brand)'; });
+  drop.addEventListener('dragleave', () => { drop.style.borderColor = ''; });
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.style.borderColor = '';
+    if (e.dataTransfer.files[0]) handleCSV(e.dataTransfer.files[0]);
+  });
+
+  run();
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
