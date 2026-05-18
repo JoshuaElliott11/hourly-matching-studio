@@ -155,12 +155,16 @@
   .config-narrative .nar-body { font-size: 14px; color: var(--ink-2); }
   .config-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0,1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px 22px;
   }
-  @media (max-width: 1280px) { .config-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 800px)  { .config-grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 500px)  { .config-grid { grid-template-columns: 1fr; } }
+  .config-grid select,
+  .config-grid input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
   .config-group { display: flex; flex-direction: column; gap: 14px; }
   .config-group h3 {
     margin: 0 0 4px; font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -292,11 +296,18 @@
   .report-card .lede { color: var(--ink-2); font-size: 14px; margin-bottom: 18px; max-width: 760px; }
   .report-bullets { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
   .report-bullets li {
-    display: flex; gap: 10px; padding-left: 0; font-size: 14px;
+    position: relative;
+    padding-left: 16px;
+    font-size: 14px;
+    line-height: 1.6;
   }
   .report-bullets li::before {
-    content: ''; width: 4px; height: 4px; border-radius: 50%;
-    background: var(--brand); margin-top: 9px; flex-shrink: 0;
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--brand);
   }
 
   /* Tooltip-ish hover note */
@@ -1721,7 +1732,7 @@ function renderReport() {
       <li>Cost breakdown: ${costBreakdown}. Total bill £${fmtMoney(m.energyBill)}m, total including carbon-priced exposure £${fmtMoney(m.totalAnnualCost)}m.</li>
       <li>The hour-of-day heatmap shows the temporal pattern of uncovered demand: evenings and winter mornings dominate. ${batteryLine}</li>
       <li>Under the GHG Protocol Scope 2 hourly-matching proposal (final standard expected 2027) and SBTi V2 (mandatory for new targets from 1 January 2028), the reportable figure is the hourly number, ${hPct.toFixed(1)}%, not ${aPct.toFixed(1)}%.</li>
-      <li>Sensitivity: every 10 percentage points of additional hourly coverage avoids roughly ${fmtNum(m.emissions * 0.1)} tCO₂e and £${fmtNum(m.carbonCost * 0.1)} of carbon-priced exposure. The cost of closing that gap typically lands at £40-90 per additional tCO₂e avoided, well above the £${state.config.carbonPrice}/tCO₂ carbon price, so the procurement uplift is justified by disclosure compliance rather than carbon pay-back alone.</li>
+      <li>Sensitivity: every 10 percentage points of additional hourly coverage avoids roughly ${fmtNum(m.emissions * 0.1)} tCO₂e and £${fmtNum(m.carbonCost * 0.1)} of carbon-priced exposure at £${state.config.carbonPrice}/tCO₂. Closing an hourly-matching gap typically requires battery storage or firmed-baseload PPAs whose implied cost per avoided tonne sits well above any current carbon price, so the case for hourly matching is driven by disclosure compliance and brand exposure rather than carbon pay-back alone.</li>
     </ul>`;
 }
 
