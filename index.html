@@ -1069,7 +1069,7 @@ const SCENARIOS = [
     tag: 'High contrast', tagClass: 'bad',
     description: '50 MW data centre, oversized solar PPA. Looks fully green on paper. At night and in winter, the lights are kept on by the grid.',
     storyTitle: 'A textbook annual-vs-hourly disconnect',
-    storyBody: 'A hyperscaler signs a solar PPA sized to its annual consumption. Annual matching reports show 100%. The site runs 24/7, so every night, every cloudy day, and every winter month is served by the grid. Under the proposed GHG Protocol Scope 2 hourly methodology, this site sits well under 40%.',
+    storyBody: 'A hyperscaler signs a solar PPA sized to its annual consumption. Annual matching reports show 100%. The site runs 24/7, so every night, every cloudy day, and every winter month is served by the grid. Under the proposed GHG Protocol Scope 2 hourly methodology, hourly coverage sits around 40%, with grid imports doing the heavy lifting from late afternoon onwards.',
     cfg: {
       loadType: 'datacenter', loadMW: 50,
       solarMW: 340, windMW: 0,
@@ -1101,7 +1101,7 @@ const SCENARIOS = [
     id: 'battery-rescue',
     title: 'Battery Rescue',
     tag: 'Upgrade story', tagClass: 'good',
-    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score jump, and watch the bill too.',
+    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score roughly double while the total bill barely moves.',
     storyTitle: 'CapEx that almost pays for itself',
     storyBody: 'Storage shifts midday solar into the evening peak. Annual matching is unchanged. Hourly matching transforms, residual emissions drop, and the battery largely pays for itself by capturing solar that would otherwise have been spilled and displacing grid imports at wholesale prices. The economic case is not as bad as it looks at first glance.',
     cfg: {
@@ -1120,7 +1120,7 @@ const SCENARIOS = [
     tag: 'Best-in-class', tagClass: 'good',
     description: 'Solar, wind, battery, and a firmed clean baseload PPA. Designed for hourly, not annual.',
     storyTitle: 'What a carbon-free target actually looks like',
-    storyBody: 'A diverse mix is the only thing that gets past 85% hourly. Each component does specific temporal work: solar covers midday, wind covers nights and winter, battery shifts the residual, and the firmed PPA fills the long quiet hours. The firmed baseload PPA carries a price premium that drives the bill higher than a solar-only portfolio.',
+    storyBody: 'A diverse mix is the only thing that gets past 85% hourly. Each component does specific temporal work: solar covers midday, wind covers nights and winter, battery shifts the residual, and the firmed PPA fills the long quiet hours. The firmed baseload PPA carries a per-MWh price premium, but because the portfolio is precisely sized rather than over-procured, the effective cost per MWh of demand is broadly comparable to a crude solar-only build.',
     cfg: {
       loadType: 'datacenter', loadMW: 40,
       solarMW: 85, windMW: 55,
@@ -1154,7 +1154,7 @@ const SCENARIOS = [
     tag: 'Greenwash risk', tagClass: 'bad',
     description: '20 MW UK office buying cheap solar RECs from another timezone. Annual: 100%. Locally, the grid is doing the work.',
     storyTitle: 'Real certificates, fictional matching',
-    storyBody: 'Buying production from a distant solar plant looks identical on annual reporting and is genuinely cheap (£35/MWh, well below local PPA prices). Under hourly and deliverability rules being drafted by the GHG Protocol, certificates produced eight hours offset from local load no longer count toward the same hour. The cost saving today is the reputational exposure tomorrow.',
+    storyBody: 'Distant-solar certificates at £35/MWh are well below local renewable PPA prices, making a 100% annual claim affordable on paper. The catch: the certificates are produced eight hours offset from local load, so the office still pays for full grid imports on top. The total bill ends up higher than just buying grid power outright. Under hourly and deliverability rules being drafted by the GHG Protocol, the certificates no longer count toward the same hour, and the green claim collapses.',
     cfg: {
       loadType: 'office', loadMW: 20,
       solarMW: 0, windMW: 0,
@@ -1713,6 +1713,15 @@ function renderReport() {
 
   const regionLabel = (REGIONS.find(rr => rr.id === state.config.region) || {}).label || 'Custom region';
 
+  // Marginal sensitivity: each 10 pp of additional hourly coverage displaces
+  // loadTotal/10 MWh of non-clean supply at the average intensity of grid+gas.
+  // This is more accurate than scaling current emissions by 10%.
+  const nonCleanMWh = m.gridTotal + m.gasTotal;
+  const avoidPer10pp = nonCleanMWh > 0
+    ? m.emissions * (m.loadTotal / 10) / nonCleanMWh
+    : 0;
+  const costAvoidPer10pp = avoidPer10pp * state.config.carbonPrice;
+
   // Build cost breakdown line, only showing line items that have meaningful values.
   const costItems = [];
   if (m.costSolar > 1) costItems.push(`solar £${fmtMoney(m.costSolar)}m`);
@@ -1730,9 +1739,9 @@ function renderReport() {
       <li>Annual matching of ${aPct.toFixed(1)}% is supported by ${fmtNum(m.cleanTotal)} MWh of clean energy procured against ${fmtNum(m.loadTotal)} MWh of consumption${overprocText}</li>
       <li>Hourly matching of ${hPct.toFixed(1)}% reflects load-weighted coverage by clean supply delivered in the same hour as demand. ${targetLine} Grid imports total ${fmtNum(m.gridTotal)} MWh${m.gasTotal > 1 ? ` and on-site gas ${fmtNum(m.gasTotal)} MWh` : ''}.</li>
       <li>Cost breakdown: ${costBreakdown}. Total bill £${fmtMoney(m.energyBill)}m, total including carbon-priced exposure £${fmtMoney(m.totalAnnualCost)}m.</li>
-      <li>The hour-of-day heatmap shows the temporal pattern of uncovered demand: evenings and winter mornings dominate. ${batteryLine}</li>
+      <li>The hour-of-day heatmap shows when uncovered demand sits across the year. ${batteryLine}</li>
       <li>Under the GHG Protocol Scope 2 hourly-matching proposal (final standard expected 2027) and SBTi V2 (mandatory for new targets from 1 January 2028), the reportable figure is the hourly number, ${hPct.toFixed(1)}%, not ${aPct.toFixed(1)}%.</li>
-      <li>Sensitivity: every 10 percentage points of additional hourly coverage avoids roughly ${fmtNum(m.emissions * 0.1)} tCO₂e and £${fmtNum(m.carbonCost * 0.1)} of carbon-priced exposure at £${state.config.carbonPrice}/tCO₂. Closing an hourly-matching gap typically requires battery storage or firmed-baseload PPAs whose implied cost per avoided tonne sits well above any current carbon price, so the case for hourly matching is driven by disclosure compliance and brand exposure rather than carbon pay-back alone.</li>
+      <li>Sensitivity: each additional 10 percentage points of hourly coverage displaces ${fmtNum(m.loadTotal / 10)} MWh of non-clean supply, avoiding roughly ${fmtNum(avoidPer10pp)} tCO₂e and £${fmtNum(costAvoidPer10pp)} of carbon-priced exposure at £${state.config.carbonPrice}/tCO₂. Closing an hourly-matching gap typically requires battery storage or firmed-baseload PPAs whose implied cost per avoided tonne sits well above any current carbon price, so the case for hourly matching is driven by disclosure compliance and brand exposure rather than carbon pay-back alone.</li>
     </ul>`;
 }
 
