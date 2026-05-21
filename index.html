@@ -384,7 +384,7 @@
         </div>
         <div class="field">
           <label>Peak load <span class="val"><span id="v-load">50</span> MW</span></label>
-          <input type="range" id="cfg-load" min="1" max="200" step="1" value="50">
+          <input type="range" id="cfg-load" min="0" max="200" step="1" value="50">
         </div>
         <div class="field">
           <label>Upload your own profile
@@ -441,27 +441,27 @@
         <h3>Procurement prices</h3>
         <div class="field">
           <label>Solar PPA <span class="val">£<span id="v-pSolar">72</span>/MWh</span></label>
-          <input type="range" id="cfg-pSolar" min="20" max="150" step="1" value="72">
+          <input type="range" id="cfg-pSolar" min="0" max="150" step="1" value="72">
         </div>
         <div class="field">
           <label>Wind PPA <span class="val">£<span id="v-pWind">75</span>/MWh</span></label>
-          <input type="range" id="cfg-pWind" min="20" max="150" step="1" value="75">
+          <input type="range" id="cfg-pWind" min="0" max="150" step="1" value="75">
         </div>
         <div class="field">
           <label>Off-site PPA <span class="val">£<span id="v-pPPA">95</span>/MWh</span></label>
-          <input type="range" id="cfg-pPPA" min="20" max="200" step="1" value="95">
+          <input type="range" id="cfg-pPPA" min="0" max="200" step="1" value="95">
         </div>
         <div class="field">
           <label>Grid wholesale <span class="val">£<span id="v-pGrid">85</span>/MWh</span></label>
-          <input type="range" id="cfg-pGrid" min="30" max="250" step="1" value="85">
+          <input type="range" id="cfg-pGrid" min="0" max="250" step="1" value="85">
         </div>
         <div class="field">
           <label>Gas variable cost <span class="val">£<span id="v-pGas">70</span>/MWh</span></label>
-          <input type="range" id="cfg-pGas" min="20" max="200" step="1" value="70">
+          <input type="range" id="cfg-pGas" min="0" max="200" step="1" value="70">
         </div>
         <div class="field">
           <label>Battery annualised <span class="val">£<span id="v-pBat">35</span>/kWh-yr</span></label>
-          <input type="range" id="cfg-pBat" min="15" max="100" step="1" value="35">
+          <input type="range" id="cfg-pBat" min="0" max="100" step="1" value="35">
         </div>
       </div>
 
@@ -476,11 +476,11 @@
         </div>
         <div class="field">
           <label>Grid CO₂ factor <span class="val"><span id="v-gridco2">400</span> kg/MWh</span></label>
-          <input type="range" id="cfg-gridco2" min="10" max="900" step="5" value="400">
+          <input type="range" id="cfg-gridco2" min="0" max="1100" step="5" value="400">
         </div>
         <div class="field">
           <label>Gas CO₂ factor <span class="val"><span id="v-gasco2">380</span> kg/MWh</span></label>
-          <input type="range" id="cfg-gasco2" min="200" max="600" step="10" value="380">
+          <input type="range" id="cfg-gasco2" min="0" max="1100" step="10" value="380">
         </div>
         <div class="field">
           <label>Carbon price <span class="val">£<span id="v-carbon">80</span>/tCO₂</span></label>
@@ -1081,27 +1081,10 @@ const SCENARIOS = [
     }
   },
   {
-    id: 'wind-belt',
-    title: 'Wind Belt Manufacturer',
-    tag: 'Honest', tagClass: 'warn',
-    description: 'Northern industrial site on the German grid relying on onshore wind. Decent overall coverage but still exposed during low-wind weeks.',
-    storyTitle: 'Wind helps, but does not solve it',
-    storyBody: 'Wind generation aligns better with industrial load than solar does, especially in winter and overnight. The annual claim is genuine. The hourly score reveals the gap during multi-day low-wind synoptic events that no battery alone can span. The German grid intensity makes the residual emissions material.',
-    cfg: {
-      loadType: 'industrial', loadMW: 30,
-      solarMW: 0, windMW: 100,
-      batteryE: 0, batteryP: 0,
-      gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
-      region: 'germany', gridCO2: 309, gasCO2: 380, carbonPrice: 80, gridShape: 'flat',
-      priceSolar: 72, priceWind: 78, pricePPA: 95, priceGrid: 95, priceGas: 70, priceBattery: 35,
-      hourlyTarget: 80
-    }
-  },
-  {
     id: 'battery-rescue',
     title: 'Battery Rescue',
     tag: 'Upgrade story', tagClass: 'good',
-    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score roughly double while the total bill barely moves.',
+    description: 'Same data centre as Solar Mirage, now with a 400 MWh battery. Watch the hourly score climb sharply while the total bill barely moves.',
     storyTitle: 'CapEx that almost pays for itself',
     storyBody: 'Storage shifts midday solar into the evening peak. Annual matching is unchanged. Hourly matching transforms, residual emissions drop, and the battery largely pays for itself by capturing solar that would otherwise have been spilled and displacing grid imports at wholesale prices. The economic case is not as bad as it looks at first glance.',
     cfg: {
@@ -1129,6 +1112,23 @@ const SCENARIOS = [
       region: 'uk', gridCO2: 124, gasCO2: 380, carbonPrice: 80, gridShape: 'evening-peak',
       priceSolar: 72, priceWind: 75, pricePPA: 115, priceGrid: 85, priceGas: 70, priceBattery: 35,
       hourlyTarget: 90
+    }
+  },
+  {
+    id: 'wind-belt',
+    title: 'Wind Belt Manufacturer',
+    tag: 'Honest', tagClass: 'warn',
+    description: 'Northern industrial site on the German grid relying on onshore wind. Decent overall coverage but still exposed during low-wind weeks.',
+    storyTitle: 'Wind helps, but does not solve it',
+    storyBody: 'Wind generation aligns better with industrial load than solar does, especially in winter and overnight. The annual claim is genuine. The hourly score reveals the gap during multi-day low-wind synoptic events that no battery alone can span. The German grid intensity makes the residual emissions material.',
+    cfg: {
+      loadType: 'industrial', loadMW: 30,
+      solarMW: 0, windMW: 100,
+      batteryE: 0, batteryP: 0,
+      gasMW: 0, ppaAnnualMWh: 0, ppaShape: 'flat',
+      region: 'germany', gridCO2: 309, gasCO2: 380, carbonPrice: 80, gridShape: 'flat',
+      priceSolar: 72, priceWind: 78, pricePPA: 95, priceGrid: 95, priceGas: 70, priceBattery: 35,
+      hourlyTarget: 80
     }
   },
   {
